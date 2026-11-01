@@ -89,6 +89,7 @@ final class AppModel: ObservableObject {
         case .set(let appearance, let why):
             do {
                 try Applier.set(appearance)
+                controller.didApply(appearance, at: now)
                 lastApplyError = nil
                 actionLine = "switched to \(appearance.rawValue) (\(why))"
             } catch {
