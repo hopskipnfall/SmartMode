@@ -16,3 +16,13 @@ jobs:
         run: swift test
       - name: Build app bundle
         run: ./scripts/build-app.sh
+      - name: Zip app bundle
+        # ditto keeps the bundle's structure and signature intact, unlike plain zip.
+        run: ditto -c -k --keepParent SmartMode.app SmartMode.zip
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartMode-${{ github.sha }}
+          path: SmartMode.zip
+          if-no-files-found: error
+          retention-days: 30
