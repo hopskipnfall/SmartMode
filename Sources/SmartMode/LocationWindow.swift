@@ -48,7 +48,7 @@ struct LocationSearchView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Where are you?").font(.headline)
-            Text("Search for a city or place in any language, or type coordinates such as 35.69, 139.69.")
+            Text("Search for a city or place, or type coordinates such as 35.69, 139.69.")
                 .font(.callout).foregroundStyle(.secondary)
 
             HStack {

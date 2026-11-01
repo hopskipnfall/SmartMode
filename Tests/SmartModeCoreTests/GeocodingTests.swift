@@ -72,27 +72,3 @@ struct CoordinateParsingTests {
         #expect(parseCoordinates("0, 181") == nil)
     }
 }
-
-struct MergePlacesTests {
-    private let appleTokyo = Place(label: "東京都, 日本", latitude: 35.690, longitude: 139.692)
-    private let meteoTokyo = Place(label: "東京都, 日本", latitude: 35.6895, longitude: 139.69171)
-    private let pngTokyo = Place(label: "Tokyo, Papua New Guinea", latitude: -8.4, longitude: 147.15)
-
-    @Test func nearbyDuplicatesCollapseKeepingTheFirst() {
-        let merged = mergePlaces([[appleTokyo], [meteoTokyo, pngTokyo]])
-        #expect(merged == [appleTokyo, pngTokyo])
-    }
-
-    @Test func distantPlacesWithTheSameNameAreKept() {
-        #expect(mergePlaces([[appleTokyo, pngTokyo]]).count == 2)
-    }
-
-    @Test func respectsTheLimit() {
-        let many = (0..<20).map { Place(label: "P\($0)", latitude: Double($0) * 2, longitude: 0) }
-        #expect(mergePlaces([many], limit: 8).count == 8)
-    }
-
-    @Test func emptyInputGivesEmptyOutput() {
-        #expect(mergePlaces([[], []]).isEmpty)
-    }
-}

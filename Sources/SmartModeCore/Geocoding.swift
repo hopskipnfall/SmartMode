@@ -38,23 +38,3 @@ public func parseCoordinates(_ text: String) -> Place? {
           (-90...90).contains(lat), (-180...180).contains(lon) else { return nil }
     return Place(label: String(format: "%.4f, %.4f", lat, lon), latitude: lat, longitude: lon)
 }
-
-/// Combines result lists in priority order, dropping places within `nearKm` of an earlier one.
-public func mergePlaces(_ lists: [[Place]], nearKm: Double = 25, limit: Int = 8) -> [Place] {
-    var merged: [Place] = []
-    for place in lists.joined() {
-        if merged.contains(where: { distanceKm($0, place) < nearKm }) { continue }
-        merged.append(place)
-        if merged.count == limit { break }
-    }
-    return merged
-}
-
-private func distanceKm(_ a: Place, _ b: Place) -> Double {
-    func rad(_ d: Double) -> Double { d * .pi / 180 }
-    let dLat = rad(b.latitude - a.latitude)
-    let dLon = rad(b.longitude - a.longitude)
-    let h = sin(dLat / 2) * sin(dLat / 2)
-        + cos(rad(a.latitude)) * cos(rad(b.latitude)) * sin(dLon / 2) * sin(dLon / 2)
-    return 6371 * 2 * asin(min(1, sqrt(h)))
-}
