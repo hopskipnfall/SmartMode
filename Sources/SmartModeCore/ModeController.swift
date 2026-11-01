@@ -48,8 +48,14 @@ public struct ModeController {
         if let lastSwitch, now.timeIntervalSince(lastSwitch) < config.minSecondsBetweenSwitches {
             return .hold("waiting out the minimum time between switches")
         }
-        lastSwitch = now
-        expected = auto
         return .set(auto, decision.reason)
+    }
+
+    /// Call after a requested switch actually succeeded. Until then the controller keeps
+    /// expecting the old appearance, so a failed switch is retried rather than being
+    /// mistaken for a manual change, and it doesn't start the minimum-time clock.
+    public mutating func didApply(_ appearance: Appearance, at now: Date) {
+        expected = appearance
+        lastSwitch = now
     }
 }
