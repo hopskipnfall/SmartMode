@@ -62,8 +62,15 @@ struct ConfigTests {
         }
     }
 
-    @Test func rejectsMissingLocation() {
-        #expect(throws: (any Error).self) { try Config.parse(data("night:\n  sunBelowDegrees: -4\n")) }
+    @Test func locationIsOptional() throws {
+        let c = try Config.parse(data("night:\n  sunBelowDegrees: -4\n"))
+        #expect(c.latitude == nil)
+        #expect(c.longitude == nil)
+    }
+
+    @Test func rejectsOnlyOneCoordinate() {
+        #expect(throws: (any Error).self) { try Config.parse(data("latitude: 35.67\n")) }
+        #expect(throws: (any Error).self) { try Config.parse(data("longitude: 139.66\n")) }
     }
 
     @Test func rejectsBadIndentation() {
@@ -80,6 +87,12 @@ struct ConfigTests {
 
     @Test func defaultFileParsesToTheExampleConfig() throws {
         #expect(try Config.parse(data(Config.defaultFileText)) == Config.example)
+    }
+
+    @Test func defaultFileDoesNotSetACoordinateOverride() throws {
+        let c = try Config.parse(data(Config.defaultFileText))
+        #expect(c.latitude == nil)
+        #expect(c.longitude == nil)
     }
 
     @Test func defaultFileHasNoCommentOnTheObviousSetting() {

@@ -41,13 +41,14 @@ public struct RoomConfig: Codable, Equatable {
 }
 
 public struct Config: Codable, Equatable {
-    public var latitude: Double
-    public var longitude: Double
+    /// Optional exact coordinates. When set they override a place chosen from the menu.
+    public var latitude: Double?
+    public var longitude: Double?
     public var night = NightConfig()
     public var room = RoomConfig()
     public var minSecondsBetweenSwitches = 60.0
 
-    public init(latitude: Double, longitude: Double) {
+    public init(latitude: Double? = nil, longitude: Double? = nil) {
         self.latitude = latitude
         self.longitude = longitude
     }
@@ -59,23 +60,24 @@ public struct Config: Codable, Equatable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
-            latitude: try c.decode(Double.self, forKey: .latitude),
-            longitude: try c.decode(Double.self, forKey: .longitude)
+            latitude: try c.decodeIfPresent(Double.self, forKey: .latitude),
+            longitude: try c.decodeIfPresent(Double.self, forKey: .longitude)
         )
         night = try c.decodeIfPresent(NightConfig.self, forKey: .night) ?? night
         room = try c.decodeIfPresent(RoomConfig.self, forKey: .room) ?? room
         minSecondsBetweenSwitches = try c.decodeIfPresent(Double.self, forKey: .minSecondsBetweenSwitches) ?? minSecondsBetweenSwitches
     }
 
-    /// Placeholder location (0, 0); the app flags it until the user sets their own.
-    public static let example = Config(latitude: 0, longitude: 0)
+    /// All defaults, with no location (it comes from the menu).
+    public static let example = Config()
 
     /// The file written on first launch: every setting at its default, with a comment where
     /// the name alone doesn't explain it.
     public static let defaultFileText = """
-    # Where you are, used to work out where the sun is. Update when you travel.
-    latitude: 0
-    longitude: 0
+    # Your location is set from the menu ("Set location…"). To use exact coordinates
+    # instead, which override the menu's choice, uncomment these two lines:
+    # latitude: 35.6895
+    # longitude: 139.6917
 
     night:
       # It's night when the sun is lower than this many degrees below the horizon.
@@ -101,8 +103,11 @@ public struct Config: Codable, Equatable {
     }
 
     func validate() throws {
-        guard (-90...90).contains(latitude) else { throw ConfigError.invalid("latitude must be within -90...90") }
-        guard (-180...180).contains(longitude) else { throw ConfigError.invalid("longitude must be within -180...180") }
+        guard (latitude == nil) == (longitude == nil) else {
+            throw ConfigError.invalid("set both latitude and longitude, or neither")
+        }
+        if let latitude, !(-90...90).contains(latitude) { throw ConfigError.invalid("latitude must be within -90...90") }
+        if let longitude, !(-180...180).contains(longitude) { throw ConfigError.invalid("longitude must be within -180...180") }
         guard room.darkBelowLux < room.lightAboveLux else {
             throw ConfigError.invalid("room.darkBelowLux must be less than room.lightAboveLux")
         }

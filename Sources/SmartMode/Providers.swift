@@ -26,6 +26,7 @@ final class WeatherProvider {
     private var cached: (value: Double, fetchedAt: Date)?
     private var lastAttempt: Date?
     private var inFlight = false
+    private var coordinates: (latitude: Double, longitude: Double)?
 
     func cloudCover(now: Date) -> Double? {
         guard let cached, now.timeIntervalSince(cached.fetchedAt) <= maxAge else { return nil }
@@ -35,18 +36,31 @@ final class WeatherProvider {
     /// Call from the main actor. Fetches at most every 15 minutes; failures keep serving the cache.
     @MainActor
     func refreshIfNeeded(latitude: Double, longitude: Double, now: Date) {
+        // A different location invalidates the cache and any fetch for the old one.
+        if coordinates?.latitude != latitude || coordinates?.longitude != longitude {
+            coordinates = (latitude, longitude)
+            cached = nil
+            lastAttempt = nil
+            inFlight = false
+        }
         if inFlight { return }
         if let lastAttempt, now.timeIntervalSince(lastAttempt) < pollInterval { return }
         lastAttempt = now
         inFlight = true
         let url = URL(string: "https://api.open-meteo.com/v1/forecast?latitude=\(latitude)&longitude=\(longitude)&current=cloud_cover")!
         Task { @MainActor in
-            defer { self.inFlight = false }
             do {
                 let (data, _) = try await URLSession.shared.data(from: url)
-                self.cached = (try parseCloudCover(data), Date())
+                let value = try parseCloudCover(data)
+                // Ignore a response for a location the user has since moved away from.
+                guard self.coordinates?.latitude == latitude, self.coordinates?.longitude == longitude else { return }
+                self.cached = (value, Date())
+                self.inFlight = false
             } catch {
                 // Keep serving the cache until maxAge; the menu shows cloud cover as n/a after that.
+                if self.coordinates?.latitude == latitude, self.coordinates?.longitude == longitude {
+                    self.inFlight = false
+                }
             }
         }
     }

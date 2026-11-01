@@ -8,6 +8,8 @@ final class AppModel: ObservableObject {
     @Published var configError: String?
     @Published var launchAtLogin = LoginItem.isEnabled
     @Published var loginItemError: String?
+    @Published var locationLabel: String?
+    @Published var locationSetInConfig = false
     @Published var paused = false {
         didSet { controller.paused = paused }
     }
@@ -22,6 +24,7 @@ final class AppModel: ObservableObject {
     private let weather = WeatherProvider()
     private var timer: Timer?
     private var lastApplyError: String?
+    private var chosenPlace = LocationStore.load()
 
     init() {
         writeExampleConfigIfMissing()
@@ -39,6 +42,16 @@ final class AppModel: ObservableObject {
             loginItemError = "Launch at login failed: \(error.localizedDescription)"
         }
         launchAtLogin = LoginItem.isEnabled
+    }
+
+    func openLocationWindow() {
+        LocationWindowController.shared.show(model: self)
+    }
+
+    func choose(_ place: Place) {
+        chosenPlace = place
+        LocationStore.save(place)
+        tick()
     }
 
     func openConfig() {
@@ -72,11 +85,16 @@ final class AppModel: ObservableObject {
         reloadConfigIfChanged()
         let config = controller.config
 
-        weather.refreshIfNeeded(latitude: config.latitude, longitude: config.longitude, now: now)
+        let location = resolveLocation(config: config, saved: chosenPlace)
+        locationLabel = location?.label
+        locationSetInConfig = location?.setInConfig ?? false
+        if let location {
+            weather.refreshIfNeeded(latitude: location.latitude, longitude: location.longitude, now: now)
+        }
         let readings = Readings(
             lux: sensor.read(now: now),
-            sunElevation: solarElevation(at: now, latitude: config.latitude, longitude: config.longitude),
-            cloudCoverPercent: weather.cloudCover(now: now)
+            sunElevation: location.map { solarElevation(at: now, latitude: $0.latitude, longitude: $0.longitude) },
+            cloudCoverPercent: location == nil ? nil : weather.cloudCover(now: now)
         )
         let decision = decider.decide(readings)
 
@@ -99,6 +117,11 @@ final class AppModel: ObservableObject {
         }
 
         var out: [String] = []
+        if let location {
+            out.append("Location: \(location.label)" + (location.setInConfig ? " (set in config.yaml)" : ""))
+        } else {
+            out.append("Location not set. Choose \"Set location…\" below.")
+        }
         out.append("Now: \(system.rawValue) · \(actionLine)")
         if let decision {
             out.append("Decision: \(decision.mode.rawValue), \(decision.reason)")
@@ -109,7 +132,6 @@ final class AppModel: ObservableObject {
         }
         if controller.overridden { out.append("Manual override active") }
         if let lastApplyError { out.append("Apply error: \(lastApplyError)") }
-        if config.latitude == 0 && config.longitude == 0 { out.append("Set your latitude/longitude in the config") }
         lines = out
     }
 }
