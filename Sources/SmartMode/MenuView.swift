@@ -22,6 +22,7 @@ struct MenuView: View {
         if let error = model.loginItemError {
             Text(error)
         }
+        Button("Set location…") { model.openLocationWindow() }
         Button("Open config…") { model.openConfig() }
         Button("Quit") { NSApplication.shared.terminate(nil) }
     }
