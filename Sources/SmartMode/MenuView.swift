@@ -24,6 +24,7 @@ struct MenuView: View {
         }
         Button("Set location…") { model.openLocationWindow() }
         Button("Open config…") { model.openConfig() }
+        Button("About SmartMode") { AboutPanel.show() }
         Button("Quit") { NSApplication.shared.terminate(nil) }
     }
 }
