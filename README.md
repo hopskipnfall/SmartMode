@@ -29,7 +29,7 @@ The first switch asks for permission to control System Events. Use the menu's **
 
 ## Config
 
-`~/.config/smart-mode/config.json` is created on first launch with every setting and a comment explaining it, and it reloads when you save. It accepts comments and trailing commas (JSON5). Set your `latitude` and `longitude`; everything else has a working default.
+`~/.config/smart-mode/config.yaml` is created on first launch with every setting at its default and a comment where the name isn't enough, and it reloads when you save. Set your `latitude` and `longitude`; everything else has a working default. If the file has an error, the menu says so and the app keeps using the last good settings.
 
 ## Tests
 

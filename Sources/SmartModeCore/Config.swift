@@ -1,4 +1,5 @@
 import Foundation
+import Yams
 
 public enum ConfigError: Error, Equatable {
     case invalid(String)
@@ -69,42 +70,32 @@ public struct Config: Codable, Equatable {
     /// Placeholder location (0, 0); the app flags it until the user sets their own.
     public static let example = Config(latitude: 0, longitude: 0)
 
-    /// The file written on first launch. Every setting is shown with its default, with comments.
-    /// Parsed as JSON5, so comments and trailing commas are fine.
+    /// The file written on first launch: every setting at its default, with a comment where
+    /// the name alone doesn't explain it.
     public static let defaultFileText = """
-    {
-      // Where you are, used to work out where the sun is. Update when you travel.
-      "latitude": 0,
-      "longitude": 0,
+    # Where you are, used to work out where the sun is. Update when you travel.
+    latitude: 0
+    longitude: 0
 
-      "night": {
-        // It's night when the sun is lower than this many degrees below the horizon.
-        // 0 = sunset/sunrise, -6 = end of civil twilight. At night it's always dark.
-        "sunBelowDegrees": -4,
-        // Cloud makes it feel darker: 100% cloud counts as the sun being this many degrees lower.
-        "cloudDarkeningDegrees": 8,
-      },
+    night:
+      # It's night when the sun is lower than this many degrees below the horizon.
+      # 0 = sunset/sunrise, -6 = end of civil twilight. At night it's always dark.
+      sunBelowDegrees: -4
+      # Cloud makes it feel darker: 100% cloud counts as the sun being this many degrees lower.
+      cloudDarkeningDegrees: 8
 
-      "room": {
-        // In daytime the light sensor can switch to dark when the room is dim.
-        // Go dark at or below this much light...
-        "darkBelowLux": 72,
-        // ...and go back to light at or above this. (Dim room ~5-30, normal indoor ~100-300.)
-        "lightAboveLux": 92,
-        // Only if the sensor's units are off: multiplies the raw reading. Leave at 1.
-        "luxScale": 1,
-      },
+    room:
+      # In daytime the light sensor can switch to dark when the room is dim.
+      darkBelowLux: 72     # go dark at or below this much light...
+      lightAboveLux: 92    # ...and back to light at or above this (dim room ~5-30, normal indoor ~100-300)
+      luxScale: 1          # only if the sensor's units are off
 
-      // Don't switch more often than this many seconds.
-      "minSecondsBetweenSwitches": 60,
-    }
+    minSecondsBetweenSwitches: 60
     """
 
-    /// Parses JSON5 (comments and trailing commas allowed), then validates.
+    /// Parses YAML, then validates.
     public static func parse(_ data: Data) throws -> Config {
-        let decoder = JSONDecoder()
-        decoder.allowsJSON5 = true
-        let config = try decoder.decode(Config.self, from: data)
+        let config = try YAMLDecoder().decode(Config.self, from: data)
         try config.validate()
         return config
     }

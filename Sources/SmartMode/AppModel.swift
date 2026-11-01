@@ -13,7 +13,7 @@ final class AppModel: ObservableObject {
     }
 
     static let configURL = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent(".config/smart-mode/config.json")
+        .appendingPathComponent(".config/smart-mode/config.yaml")
 
     private var controller = ModeController(config: .example)
     private var decider = AutoDecider(config: .example)
