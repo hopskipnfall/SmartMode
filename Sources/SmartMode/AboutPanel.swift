@@ -33,7 +33,7 @@ enum AboutPanel {
         func plain(_ s: String) -> NSAttributedString { NSAttributedString(string: s, attributes: base) }
 
         text.append(plain("By "))
-        text.append(link("hopskipnfall", authorURL))
+        text.append(link("Jonn Spencer", authorURL))
         text.append(plain("\n"))
         text.append(link("github.com/hopskipnfall/SmartMode", repositoryURL))
         text.append(plain("\nLicensed under the "))

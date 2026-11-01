@@ -10,8 +10,9 @@ BUILD="$(git rev-parse --short HEAD 2>/dev/null || echo dev)"
 
 APP="SmartMode.app"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/SmartMode"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -21,12 +22,13 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleIdentifier</key><string>local.smartmode</string>
   <key>CFBundleName</key><string>SmartMode</string>
   <key>CFBundleExecutable</key><string>SmartMode</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleVersion</key><string>$BUILD</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
-  <key>NSHumanReadableCopyright</key><string>Copyright © 2026 hopskipnfall. Apache License 2.0.</string>
+  <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Jonn Spencer. Apache License 2.0.</string>
   <key>NSAppleEventsUsageDescription</key>
   <string>Smart Mode switches between light and dark appearance.</string>
 </dict>
