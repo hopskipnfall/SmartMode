@@ -2,12 +2,13 @@
 
 A macOS menu-bar app that switches between light and dark mode from ambient signals instead of a schedule.
 
-It scores how dark it should be from:
+## How it decides
 
-- the MacBook's **ambient light sensor** (private HID API, Apple Silicon laptops only),
-- the **sun's elevation** computed offline from your coordinates, adjusted by **cloud cover** (Open-Meteo).
+1. **Night is always dark.** The sun's elevation is computed offline from your coordinates and lowered by cloud cover (from Open-Meteo). When it's below the night cutoff, it's dark and the room sensor is ignored.
+2. **Daytime starts light, and a dark room can switch it to dark.** The MacBook's ambient light sensor (a private API, Apple Silicon laptops only) goes dark at or below one brightness and back to light at or above a higher one.
+3. **No sensor reading** (lid closed, external display): the sun decides alone, so light in the day and dark at night.
 
-If the sun is well below the horizon it's always dark. Otherwise the weighted score decides, with hysteresis and a minimum time between switches. Changing the appearance by hand pauses auto-switching until the automatic decision next flips.
+Changing the appearance by hand pauses auto-switching until the automatic decision next flips. The menu shows the current decision and why.
 
 ## Build and run
 
@@ -16,9 +17,11 @@ If the sun is well below the horizon it's always dark. Otherwise the weighted sc
 open SmartMode.app
 ```
 
-Use the menu's **Launch at login** toggle to start it automatically. macOS ties this to the app's location, so move `SmartMode.app` to `/Applications` first.
+The first switch asks for permission to control System Events. Use the menu's **Launch at login** toggle to start it automatically. macOS ties that to the app's location, so move `SmartMode.app` to `/Applications` first.
 
-The first switch asks for permission to control System Events. Config lives at `~/.config/smart-mode/config.json` (created on first launch, hot-reloaded). Set your `latitude` and `longitude`; see `config.example.json` for every tunable.
+## Config
+
+`~/.config/smart-mode/config.json` is created on first launch with every setting and a comment explaining it, and it reloads when you save. It accepts comments and trailing commas (JSON5). Set your `latitude` and `longitude`; everything else has a working default.
 
 ## Tests
 

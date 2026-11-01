@@ -4,62 +4,47 @@ public enum ConfigError: Error, Equatable {
     case invalid(String)
 }
 
-public struct LuxConfig: Codable, Equatable {
-    public var weight = 3.0
-    /// Reading (after `scale`) at or above which the room counts as fully bright.
-    public var brightLux = 150.0
-    /// Reading (after `scale`) at or below which the room counts as fully dark.
-    public var darkLux = 5.0
-    /// Multiplier from raw sensor units to the lux scale used above.
-    public var scale = 1.0
+public struct NightConfig: Codable, Equatable {
+    /// It's night when the cloud-adjusted sun elevation is below this many degrees.
+    public var sunBelowDegrees = -4.0
+    /// 100% cloud cover counts as the sun being this many degrees lower.
+    public var cloudDarkeningDegrees = 8.0
 
     public init() {}
-    enum CodingKeys: String, CodingKey { case weight, brightLux, darkLux, scale }
+    enum CodingKeys: String, CodingKey { case sunBelowDegrees, cloudDarkeningDegrees }
     public init(from decoder: Decoder) throws {
         self.init()
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        weight = try c.decodeIfPresent(Double.self, forKey: .weight) ?? weight
-        brightLux = try c.decodeIfPresent(Double.self, forKey: .brightLux) ?? brightLux
-        darkLux = try c.decodeIfPresent(Double.self, forKey: .darkLux) ?? darkLux
-        scale = try c.decodeIfPresent(Double.self, forKey: .scale) ?? scale
+        sunBelowDegrees = try c.decodeIfPresent(Double.self, forKey: .sunBelowDegrees) ?? sunBelowDegrees
+        cloudDarkeningDegrees = try c.decodeIfPresent(Double.self, forKey: .cloudDarkeningDegrees) ?? cloudDarkeningDegrees
     }
 }
 
-public struct SunConfig: Codable, Equatable {
-    public var weight = 2.0
-    /// Effective sun elevation (degrees) at or above which it counts as fully bright.
-    public var brightElevation = 10.0
-    /// Effective sun elevation (degrees) at or below which it counts as fully dark.
-    public var darkElevation = -6.0
-    /// Degrees of elevation subtracted at 100% cloud cover (scaled linearly).
-    public var cloudPenaltyDegrees = 8.0
-    /// When the sun heuristic's darkness reaches this value (0...1), it's night outside and the
-    /// result is forced dark regardless of the room sensor. Set above 1 to disable.
-    public var nightOverrideDarkness = 0.9
+public struct RoomConfig: Codable, Equatable {
+    /// In daytime, go dark at or below this much light.
+    public var darkBelowLux = 72.0
+    /// In daytime, go back to light at or above this much light.
+    public var lightAboveLux = 92.0
+    /// Multiplier from raw sensor units to lux. Leave at 1 unless the sensor reads off.
+    public var luxScale = 1.0
 
     public init() {}
-    enum CodingKeys: String, CodingKey {
-        case weight, brightElevation, darkElevation, cloudPenaltyDegrees, nightOverrideDarkness
-    }
+    enum CodingKeys: String, CodingKey { case darkBelowLux, lightAboveLux, luxScale }
     public init(from decoder: Decoder) throws {
         self.init()
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        weight = try c.decodeIfPresent(Double.self, forKey: .weight) ?? weight
-        brightElevation = try c.decodeIfPresent(Double.self, forKey: .brightElevation) ?? brightElevation
-        darkElevation = try c.decodeIfPresent(Double.self, forKey: .darkElevation) ?? darkElevation
-        cloudPenaltyDegrees = try c.decodeIfPresent(Double.self, forKey: .cloudPenaltyDegrees) ?? cloudPenaltyDegrees
-        nightOverrideDarkness = try c.decodeIfPresent(Double.self, forKey: .nightOverrideDarkness) ?? nightOverrideDarkness
+        darkBelowLux = try c.decodeIfPresent(Double.self, forKey: .darkBelowLux) ?? darkBelowLux
+        lightAboveLux = try c.decodeIfPresent(Double.self, forKey: .lightAboveLux) ?? lightAboveLux
+        luxScale = try c.decodeIfPresent(Double.self, forKey: .luxScale) ?? luxScale
     }
 }
 
 public struct Config: Codable, Equatable {
     public var latitude: Double
     public var longitude: Double
-    public var darkThreshold = 0.6
-    public var lightThreshold = 0.4
-    public var minDwellSeconds = 600.0
-    public var lux = LuxConfig()
-    public var sun = SunConfig()
+    public var night = NightConfig()
+    public var room = RoomConfig()
+    public var minSecondsBetweenSwitches = 60.0
 
     public init(latitude: Double, longitude: Double) {
         self.latitude = latitude
@@ -67,7 +52,7 @@ public struct Config: Codable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case latitude, longitude, darkThreshold, lightThreshold, minDwellSeconds, lux, sun
+        case latitude, longitude, night, room, minSecondsBetweenSwitches
     }
 
     public init(from decoder: Decoder) throws {
@@ -76,17 +61,50 @@ public struct Config: Codable, Equatable {
             latitude: try c.decode(Double.self, forKey: .latitude),
             longitude: try c.decode(Double.self, forKey: .longitude)
         )
-        darkThreshold = try c.decodeIfPresent(Double.self, forKey: .darkThreshold) ?? darkThreshold
-        lightThreshold = try c.decodeIfPresent(Double.self, forKey: .lightThreshold) ?? lightThreshold
-        minDwellSeconds = try c.decodeIfPresent(Double.self, forKey: .minDwellSeconds) ?? minDwellSeconds
-        lux = try c.decodeIfPresent(LuxConfig.self, forKey: .lux) ?? lux
-        sun = try c.decodeIfPresent(SunConfig.self, forKey: .sun) ?? sun
+        night = try c.decodeIfPresent(NightConfig.self, forKey: .night) ?? night
+        room = try c.decodeIfPresent(RoomConfig.self, forKey: .room) ?? room
+        minSecondsBetweenSwitches = try c.decodeIfPresent(Double.self, forKey: .minSecondsBetweenSwitches) ?? minSecondsBetweenSwitches
     }
 
+    /// Placeholder location (0, 0); the app flags it until the user sets their own.
     public static let example = Config(latitude: 0, longitude: 0)
 
+    /// The file written on first launch. Every setting is shown with its default, with comments.
+    /// Parsed as JSON5, so comments and trailing commas are fine.
+    public static let defaultFileText = """
+    {
+      // Where you are, used to work out where the sun is. Update when you travel.
+      "latitude": 0,
+      "longitude": 0,
+
+      "night": {
+        // It's night when the sun is lower than this many degrees below the horizon.
+        // 0 = sunset/sunrise, -6 = end of civil twilight. At night it's always dark.
+        "sunBelowDegrees": -4,
+        // Cloud makes it feel darker: 100% cloud counts as the sun being this many degrees lower.
+        "cloudDarkeningDegrees": 8,
+      },
+
+      "room": {
+        // In daytime the light sensor can switch to dark when the room is dim.
+        // Go dark at or below this much light...
+        "darkBelowLux": 72,
+        // ...and go back to light at or above this. (Dim room ~5-30, normal indoor ~100-300.)
+        "lightAboveLux": 92,
+        // Only if the sensor's units are off: multiplies the raw reading. Leave at 1.
+        "luxScale": 1,
+      },
+
+      // Don't switch more often than this many seconds.
+      "minSecondsBetweenSwitches": 60,
+    }
+    """
+
+    /// Parses JSON5 (comments and trailing commas allowed), then validates.
     public static func parse(_ data: Data) throws -> Config {
-        let config = try JSONDecoder().decode(Config.self, from: data)
+        let decoder = JSONDecoder()
+        decoder.allowsJSON5 = true
+        let config = try decoder.decode(Config.self, from: data)
         try config.validate()
         return config
     }
@@ -94,9 +112,11 @@ public struct Config: Codable, Equatable {
     func validate() throws {
         guard (-90...90).contains(latitude) else { throw ConfigError.invalid("latitude must be within -90...90") }
         guard (-180...180).contains(longitude) else { throw ConfigError.invalid("longitude must be within -180...180") }
-        guard lightThreshold < darkThreshold else {
-            throw ConfigError.invalid("lightThreshold must be less than darkThreshold")
+        guard room.darkBelowLux < room.lightAboveLux else {
+            throw ConfigError.invalid("room.darkBelowLux must be less than room.lightAboveLux")
         }
-        guard minDwellSeconds >= 0 else { throw ConfigError.invalid("minDwellSeconds must be >= 0") }
+        guard room.luxScale > 0 else { throw ConfigError.invalid("room.luxScale must be > 0") }
+        guard night.cloudDarkeningDegrees >= 0 else { throw ConfigError.invalid("night.cloudDarkeningDegrees must be >= 0") }
+        guard minSecondsBetweenSwitches >= 0 else { throw ConfigError.invalid("minSecondsBetweenSwitches must be >= 0") }
     }
 }
