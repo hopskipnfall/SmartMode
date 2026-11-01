@@ -6,32 +6,47 @@ struct ConfigTests {
     private func data(_ s: String) -> Data { s.data(using: .utf8)! }
 
     @Test func minimalConfigGetsDefaults() throws {
-        let c = try Config.parse(data(#"{"latitude": 40.7, "longitude": -74.0}"#))
-        #expect(c.latitude == 40.7)
-        #expect(c.longitude == -74.0)
-        #expect(c.darkThreshold == 0.6)
-        #expect(c.lightThreshold == 0.4)
-        #expect(c.minDwellSeconds == 600)
-        #expect(c.lux.weight == 3)
-        #expect(c.sun.darkElevation == -6)
-        #expect(c.sun.nightOverrideDarkness == 0.9)
-    }
-
-    @Test func nightOverrideThresholdIsConfigurable() throws {
-        let c = try Config.parse(data(#"{"latitude": 0, "longitude": 0, "sun": {"nightOverrideDarkness": 0.5}}"#))
-        #expect(c.sun.nightOverrideDarkness == 0.5)
-        #expect(c.sun.weight == 2) // untouched default
+        let c = try Config.parse(data(#"{"latitude": 35.67, "longitude": 139.66}"#))
+        #expect(c.latitude == 35.67)
+        #expect(c.longitude == 139.66)
+        #expect(c.night.sunBelowDegrees == -4)
+        #expect(c.night.cloudDarkeningDegrees == 8)
+        #expect(c.room.darkBelowLux == 72)
+        #expect(c.room.lightAboveLux == 92)
+        #expect(c.room.luxScale == 1)
+        #expect(c.minSecondsBetweenSwitches == 60)
     }
 
     @Test func partialOverrideOfNestedSection() throws {
-        let c = try Config.parse(data(#"{"latitude": 0, "longitude": 0, "lux": {"weight": 0}}"#))
-        #expect(c.lux.weight == 0)
-        #expect(c.lux.darkLux == 5) // untouched default
+        let c = try Config.parse(data(#"{"latitude": 0, "longitude": 0, "room": {"darkBelowLux": 40}}"#))
+        #expect(c.room.darkBelowLux == 40)
+        #expect(c.room.lightAboveLux == 92) // untouched default
     }
 
-    @Test func rejectsInvertedThresholds() {
+    @Test func acceptsCommentsAndTrailingCommas() throws {
+        let text = """
+        {
+          // where I live
+          "latitude": 35.67,
+          "longitude": 139.66, /* east */
+          "room": { "darkBelowLux": 50, },
+        }
+        """
+        let c = try Config.parse(data(text))
+        #expect(c.room.darkBelowLux == 50)
+    }
+
+    @Test func legacyKeysAreIgnoredAndDefaultsApply() throws {
+        // A config from the old weighted-score version still loads: location carries over.
+        let legacy = #"{"latitude": 35.67, "longitude": 139.66, "darkThreshold": 0.6, "lux": {"weight": 6, "darkLux": 60}}"#
+        let c = try Config.parse(data(legacy))
+        #expect(c.latitude == 35.67)
+        #expect(c.room.darkBelowLux == 72)
+    }
+
+    @Test func rejectsInvertedLuxThresholds() {
         #expect(throws: (any Error).self) {
-            try Config.parse(data(#"{"latitude": 0, "longitude": 0, "darkThreshold": 0.3, "lightThreshold": 0.7}"#))
+            try Config.parse(data(#"{"latitude": 0, "longitude": 0, "room": {"darkBelowLux": 100, "lightAboveLux": 50}}"#))
         }
     }
 
@@ -45,10 +60,7 @@ struct ConfigTests {
         #expect(throws: (any Error).self) { try Config.parse(data("{nope")) }
     }
 
-    @Test func exampleRoundTrips() throws {
-        let enc = JSONEncoder()
-        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let encoded = try enc.encode(Config.example)
-        #expect(try Config.parse(encoded) == Config.example)
+    @Test func defaultFileParsesToTheExampleConfig() throws {
+        #expect(try Config.parse(data(Config.defaultFileText)) == Config.example)
     }
 }

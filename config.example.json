@@ -1,9 +1,0 @@
-{
-  "latitude": 40.7128,
-  "longitude": -74.0060,
-  "darkThreshold": 0.6,
-  "lightThreshold": 0.4,
-  "minDwellSeconds": 600,
-  "lux": { "weight": 3, "brightLux": 150, "darkLux": 5, "scale": 1 },
-  "sun": { "weight": 2, "brightElevation": 10, "darkElevation": -6, "cloudPenaltyDegrees": 8 }
-}

@@ -10,10 +10,13 @@ public enum Action: Equatable {
     }
 }
 
+/// Applies an automatic decision to the system while respecting manual changes:
+/// switching waits out a minimum time, and a manual change pauses auto-switching
+/// until the automatic decision next flips (or the system matches it again).
 public struct ModeController {
     public var config: Config
     public var paused = false
-    /// What the score alone says the mode should be (hysteresis applied), independent of overrides.
+    /// The most recent automatic decision, independent of overrides.
     public private(set) var autoMode: Appearance?
     public private(set) var overridden = false
 
@@ -24,38 +27,29 @@ public struct ModeController {
         self.config = config
     }
 
-    public mutating func evaluate(score: Double?, system: Appearance, now: Date) -> Action {
+    public mutating func evaluate(_ decision: AutoDecision?, system: Appearance, now: Date) -> Action {
         if let expected, expected != system { overridden = true }
         expected = system
 
-        guard let score else { return .hold("no signals") }
+        guard let decision else { return .hold("no signals") }
 
         let previousAuto = autoMode
-        switch autoMode {
-        case nil:
-            autoMode = score >= (config.darkThreshold + config.lightThreshold) / 2 ? .dark : .light
-        case .light? where score > config.darkThreshold:
-            autoMode = .dark
-        case .dark? where score < config.lightThreshold:
-            autoMode = .light
-        default:
-            break
-        }
-        guard let auto = autoMode else { return .hold("no signals") }
+        let auto = decision.mode
+        autoMode = auto
 
         if overridden, (previousAuto != nil && previousAuto != auto) || system == auto {
             overridden = false
         }
 
         if paused { return .hold("paused") }
-        if overridden { return .hold("manual override until auto decision changes") }
+        if overridden { return .hold("manual override until the automatic decision changes") }
         if system == auto { return .hold("in sync (\(auto.rawValue))") }
 
-        if let lastSwitch, now.timeIntervalSince(lastSwitch) < config.minDwellSeconds {
-            return .hold("waiting out minimum dwell")
+        if let lastSwitch, now.timeIntervalSince(lastSwitch) < config.minSecondsBetweenSwitches {
+            return .hold("waiting out the minimum time between switches")
         }
         lastSwitch = now
         expected = auto
-        return .set(auto, String(format: "score %.2f", score))
+        return .set(auto, decision.reason)
     }
 }
