@@ -10,6 +10,14 @@ A macOS menu-bar app that switches between light and dark mode from ambient sign
 
 Changing the appearance by hand pauses auto-switching until the automatic decision next flips. The menu shows the current decision and why.
 
+## Download a build
+
+Every CI run attaches a `SmartMode-<commit>` artifact (a zip of `SmartMode.app`) to the run on the repo's Actions tab, kept for 30 days. The app is only ad-hoc signed, so macOS quarantines a downloaded copy. After unzipping, clear that once:
+
+```bash
+xattr -dr com.apple.quarantine SmartMode.app
+```
+
 ## Build and run
 
 ```bash
