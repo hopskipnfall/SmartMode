@@ -20,6 +20,10 @@ struct MenuView: View {
             Divider()
             Text(error)
         }
+        if let error = model.locationSaveError {
+            Divider()
+            Text(error)
+        }
         Divider()
         Button(model.paused ? "Resume auto switching" : "Pause auto switching") {
             model.paused.toggle()

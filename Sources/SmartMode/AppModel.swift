@@ -9,7 +9,7 @@ final class AppModel: ObservableObject {
     @Published var launchAtLogin = LoginItem.isEnabled
     @Published var loginItemError: String?
     @Published var locationLabel: String?
-    @Published var locationSetInConfig = false
+    @Published var locationSaveError: String?
 
     /// Without a location the app can't place the sun, so it does nothing at all.
     var needsLocation: Bool { locationLabel == nil }
@@ -27,7 +27,6 @@ final class AppModel: ObservableObject {
     private let weather = WeatherProvider()
     private var timer: Timer?
     private var lastApplyError: String?
-    private var chosenPlace = LocationStore.load()
 
     init() {
         writeExampleConfigIfMissing()
@@ -51,9 +50,18 @@ final class AppModel: ObservableObject {
         LocationWindowController.shared.show(model: self)
     }
 
+    /// Writes the chosen place into the config file's `location:` section (leaving the rest of
+    /// the file alone) and applies it straight away. The config is the only place a location lives.
     func choose(_ place: Place) {
-        chosenPlace = place
-        LocationStore.save(place)
+        let url = Self.configURL
+        do {
+            let existing = (try? String(contentsOf: url, encoding: .utf8)) ?? Config.defaultFileText
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try configText(existing, settingLocationTo: place).write(to: url, atomically: true, encoding: .utf8)
+            locationSaveError = nil
+        } catch {
+            locationSaveError = "Couldn't save the location to config.yaml: \(error.localizedDescription)"
+        }
         tick()
     }
 
@@ -88,9 +96,8 @@ final class AppModel: ObservableObject {
         reloadConfigIfChanged()
         let config = controller.config
 
-        let location = resolveLocation(config: config, saved: chosenPlace)
+        let location = resolveLocation(config: config)
         locationLabel = location?.label
-        locationSetInConfig = location?.setInConfig ?? false
         if let location {
             weather.refreshIfNeeded(latitude: location.latitude, longitude: location.longitude, now: now)
         }
@@ -121,7 +128,7 @@ final class AppModel: ObservableObject {
 
         var out: [String] = []
         if let location {
-            out.append("Location: \(location.label)" + (location.setInConfig ? " (set in config.yaml)" : ""))
+            out.append("Location: \(location.label)")
         }
         out.append("Now: \(system.rawValue) · \(actionLine)")
         if let decision {
