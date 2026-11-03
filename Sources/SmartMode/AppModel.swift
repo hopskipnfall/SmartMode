@@ -10,6 +10,7 @@ final class AppModel: ObservableObject {
     @Published var loginItemError: String?
     @Published var locationLabel: String?
     @Published var locationSaveError: String?
+    @Published var availableUpdate: AvailableUpdate?
 
     /// Without a location the app can't place the sun, so it does nothing at all.
     var needsLocation: Bool { locationLabel == nil }
@@ -25,6 +26,7 @@ final class AppModel: ObservableObject {
     private var configModified: Date?
     private let sensor = SensorProvider()
     private let weather = WeatherProvider()
+    private let updates = UpdateChecker()
     private var timer: Timer?
     private var lastApplyError: String?
 
@@ -65,6 +67,21 @@ final class AppModel: ObservableObject {
         tick()
     }
 
+    func openUpdate(_ update: AvailableUpdate) {
+        NSWorkspace.shared.open(update.url)
+    }
+
+    /// Opens GitHub's new-bug-report form with the SmartMode and macOS versions filled in.
+    func openBugReport() {
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        let macOS = "macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"
+        NSWorkspace.shared.open(bugReportURL(version: updates.currentVersion ?? "unknown", macOS: macOS))
+    }
+
+    private func refreshAvailableUpdate() {
+        availableUpdate = controller.config.checkForUpdates ? updates.available : nil
+    }
+
     func openConfig() {
         NSWorkspace.shared.open(Self.configURL)
     }
@@ -95,6 +112,11 @@ final class AppModel: ObservableObject {
         let now = Date()
         reloadConfigIfChanged()
         let config = controller.config
+
+        if config.checkForUpdates {
+            updates.checkIfDue(now: now) { [weak self] in self?.refreshAvailableUpdate() }
+        }
+        refreshAvailableUpdate()
 
         let location = resolveLocation(config: config)
         locationLabel = location?.label

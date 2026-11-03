@@ -37,6 +37,11 @@ Until a location is set the app does nothing: the menu-bar icon turns into a war
 
 `~/.config/smart-mode/config.yaml` is created on first launch with every setting at its default and a comment where the name isn't enough, and it reloads when you save. If the file has an error, the menu says so and the app keeps using the last good settings.
 
+## Updates and feedback
+
+- **New versions:** once a day SmartMode asks GitHub for the latest release (one request to `api.github.com`, nothing sent but the request itself) and shows **New version available** in the menu when it's newer than yours. Turn this off with `checkForUpdates: false` in the config. Updating is manual: download the new zip from the releases page.
+- **Problems:** **Report an issue…** in the menu opens a bug report form on GitHub with your SmartMode and macOS versions filled in. Your location and settings are not put in the link; the form asks you to paste them only if you want to share them.
+
 ## Tests
 
 ```bash

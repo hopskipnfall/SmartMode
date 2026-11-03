@@ -16,6 +16,11 @@ struct ConfigTests {
         #expect(c.room.lightAboveLux == 92)
         #expect(c.room.luxScale == 1)
         #expect(c.minSecondsBetweenSwitches == 60)
+        #expect(c.checkForUpdates == true)
+    }
+
+    @Test func updateChecksCanBeTurnedOff() throws {
+        #expect(try Config.parse(data("checkForUpdates: false\n")).checkForUpdates == false)
     }
 
     @Test func locationNameIsDisplayOnly() throws {

@@ -71,6 +71,8 @@ public struct Config: Codable, Equatable {
     public var night = NightConfig()
     public var room = RoomConfig()
     public var minSecondsBetweenSwitches = 60.0
+    /// Look for a newer release on GitHub once a day.
+    public var checkForUpdates = true
 
     /// Everything defaulted; the arguments are a convenience for building a config with a location.
     public init(latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil) {
@@ -78,7 +80,7 @@ public struct Config: Codable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case location, night, room, minSecondsBetweenSwitches
+        case location, night, room, minSecondsBetweenSwitches, checkForUpdates
     }
 
     public init(from decoder: Decoder) throws {
@@ -88,6 +90,7 @@ public struct Config: Codable, Equatable {
         night = try c.decodeIfPresent(NightConfig.self, forKey: .night) ?? night
         room = try c.decodeIfPresent(RoomConfig.self, forKey: .room) ?? room
         minSecondsBetweenSwitches = try c.decodeIfPresent(Double.self, forKey: .minSecondsBetweenSwitches) ?? minSecondsBetweenSwitches
+        checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? checkForUpdates
     }
 
     /// All defaults, with no location (it comes from the menu).
@@ -118,6 +121,9 @@ public struct Config: Codable, Equatable {
       luxScale: 1          # only if the sensor's units are off
 
     minSecondsBetweenSwitches: 60
+
+    # Once a day, ask GitHub whether a newer SmartMode release exists (nothing is sent but the request).
+    checkForUpdates: true
     """
 
     /// Parses YAML, then validates.
