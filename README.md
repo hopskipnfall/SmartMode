@@ -1,6 +1,6 @@
 # SmartMode
 
-SmartMode switches macOS between light and dark mode from the sun and your room's brightness instead of a schedule. It lives in the menu bar.
+SmartMode switches macOS and Linux between light and dark mode from the sun and your room's brightness instead of a schedule. It lives in the menu bar (macOS) or the system tray (Linux).
 
 <img width="373" height="351" alt="The SmartMode menu showing the current decision, the sun and the room reading" src="https://github.com/user-attachments/assets/0d432fcf-673d-4a06-a1b1-1c6664a1ca04" />
 
@@ -34,6 +34,38 @@ Because the sensor API is undocumented, a macOS update could break sensor readin
 6. The first time it switches, macOS asks whether SmartMode may control System Events. Click **Allow**; without that it can't change the appearance.
 
 The first time it runs from `/Applications`, SmartMode adds itself to your login items so it starts automatically, and macOS shows a notification when that happens. Turn it off any time with the **Launch at login** toggle in the menu, and it stays off. macOS ties a login item to the app's location, which is why it only does this for a copy in `/Applications`.
+
+## Linux
+
+The Linux build is a tray icon (StatusNotifier / AppIndicator) with the same menu, and works the same way as on macOS. It is tested on Linux Mint (Cinnamon).
+
+### Install
+
+1. Open the latest run on the repo's Actions tab and download the `SmartMode-linux-<commit>` artifact (there is no Linux release download yet). It is a `.tar.gz` of one x86_64 binary built on Ubuntu 24.04, which matches Mint 22.
+2. Unpack it somewhere stable, such as `~/.local/bin`, and run it:
+   ```bash
+   tar xzf SmartMode-linux-X64.tar.gz -C ~/.local/bin
+   ~/.local/bin/SmartModeLinux
+   ```
+3. Set a location from the tray menu, as on macOS.
+
+It needs `libgtk-3-0`, `libayatana-appindicator3-1`, libcurl and libxml2, which Mint already has. GNOME also needs the AppIndicator extension to show tray icons.
+
+### How it differs from macOS
+
+- **Desktops:** Cinnamon switches the Mint-Y GTK and Cinnamon themes (`Mint-Y` ↔ `Mint-Y-Dark`, keeping your accent) plus the system color scheme. Other desktops (GNOME and friends) switch `org.gnome.desktop.interface color-scheme`. It uses `gsettings`.
+- **Ambient light sensor:** read from the kernel's IIO interface (`/sys/bus/iio/devices/*/in_illuminance_*`). Many machines have none; then the sun and clouds decide on their own. A closed lid (`/proc/acpi/button/lid`) counts as no reading.
+- **Launch at login** writes `~/.config/autostart/smart-mode.desktop`. It is turned on the first time the app runs, except from a `.build` folder, and the **Launch at login** toggle turns it off for good. The entry points at wherever the binary was when you toggled it, so move the binary first.
+- **No update check** yet.
+
+### Building from source
+
+Needs the Swift toolchain, `libgtk-3-dev` and `libayatana-appindicator3-dev`:
+
+```bash
+swift build -c release --product SmartModeLinux
+.build/release/SmartModeLinux
+```
 
 ## Location
 

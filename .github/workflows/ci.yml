@@ -6,6 +6,31 @@ on:
   pull_request:
 
 jobs:
+  build-and-test-linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.1"
+      - name: Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libcurl4-openssl-dev libxml2-dev
+      - name: Unit tests
+        run: swift test
+      - name: Build
+        # The Swift runtime is linked in, so the binary only needs GTK, AppIndicator, curl and libxml2 installed.
+        run: swift build -c release --product SmartModeLinux --static-swift-stdlib
+      - name: Package binary
+        # tar keeps the executable bit, which an artifact zip would drop.
+        run: tar -czf SmartMode-linux-${{ runner.arch }}.tar.gz -C .build/release SmartModeLinux
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartMode-linux-${{ github.sha }}
+          path: SmartMode-linux-${{ runner.arch }}.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
   build-and-test:
     runs-on: macos-latest
     steps:
