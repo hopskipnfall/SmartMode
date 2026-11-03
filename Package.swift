@@ -14,7 +14,7 @@ let package = Package(
         ),
         .target(name: "SmartModeCore", dependencies: ["Yams"]),
         .executableTarget(name: "SmartModeProbe", dependencies: ["SensorShim"]),
-        .executableTarget(name: "SmartMode", dependencies: ["SmartModeCore", "SensorShim"]),
+        .executableTarget(name: "SmartMode", dependencies: ["SmartModeCore", "SensorShim"], path: "Sources/SmartModeMac"),
         .testTarget(name: "SmartModeCoreTests", dependencies: ["SmartModeCore"]),
     ]
 )
