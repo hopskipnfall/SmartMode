@@ -42,7 +42,8 @@ jobs:
       - name: Unit tests
         run: swift test
       - name: Build
-        run: swift build -c release --product SmartModeWindows
+        # Static runtime: a normal PC has no swiftCore.dll or Foundation DLLs next to the exe.
+        run: swift build -c release --product SmartModeWindows --static-swift-stdlib
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
