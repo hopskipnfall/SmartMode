@@ -1,42 +1,43 @@
 # SmartMode
 
-A macOS menu-bar app that switches between light and dark mode from ambient signals instead of a schedule.
+SmartMode switches macOS between light and dark mode from the sun and your room's brightness instead of a schedule. It lives in the menu bar.
 
-## How it decides
+<img width="373" height="351" alt="The SmartMode menu showing the current decision, the sun and the room reading" src="https://github.com/user-attachments/assets/0d432fcf-673d-4a06-a1b1-1c6664a1ca04" />
 
-1. **Night is always dark.** The sun's elevation is computed offline from your coordinates and lowered by cloud cover (from Open-Meteo). When it's below the night cutoff, it's dark and the room sensor is ignored.
-2. **Daytime starts light, and a dark room can switch it to dark.** The MacBook's ambient light sensor (a private API, Apple Silicon laptops only) goes dark at or below one brightness and back to light at or above a higher one.
-3. **No sensor reading** (lid closed, external display): the sun decides alone, so light in the day and dark at night.
+## How it works
 
-Changing the appearance by hand pauses auto-switching until the automatic decision next flips. The menu shows the current decision and why.
+- You enter a location by name or coordinates (the app does not directly access your location).
+- When the angle of the sun drops to a certain point, dark mode is automatically enabled.
+- Dense clouds make it get dark earlier, so we subtract from the angle of the sun based on the amount of cloud cover.
+- During the day, we use the ambient light sensor on your Mac to switch to dark mode if the room appears to be dark.
+- With no sensor reading (lid closed), the sun decides on its own. If you change the appearance by hand, SmartMode steps aside until its own decision next changes. The menu shows the current decision and why.
 
-## Download a build
+## Requirements
 
-Every CI run attaches a `SmartMode-<commit>` artifact (a zip of `SmartMode.app`) to the run on the repo's Actions tab, kept for 30 days. Releases carry the same zip.
+- An **Apple Silicon MacBook** (the ambient light sensor is read through a private, undocumented API, and this build is arm64 only)
+- macOS 13 or later
 
-The app is only ad-hoc signed and not notarized, so macOS blocks a downloaded copy the first time you open it. Allow it either way:
+Because the sensor API is undocumented, a macOS update could break sensor readings.
 
-- **In System Settings (easiest):** open **Privacy & Security**, scroll down to the Security section, find the message saying SmartMode was blocked, click **Open Anyway** and confirm. Then open the app again. The exact wording differs a little between macOS versions.
-- **Or in Terminal:** after unzipping, clear the quarantine flag once:
+## Install
 
-  ```bash
-  xattr -dr com.apple.quarantine SmartMode.app
-  ```
+1. Download `SmartMode-<version>.zip` from the [latest release](https://github.com/hopskipnfall/SmartMode/releases/latest) and unzip it.
+2. Move `SmartMode.app` to `/Applications`.
+3. Open it. The app isn't notarized, so macOS blocks it the first time. Allow it in one of two ways:
+   - **In System Settings (easiest):** open **Privacy & Security**, scroll down to the Security section, find the message saying SmartMode was blocked, click **Open Anyway** and confirm. Then open the app again. The exact wording differs a little between macOS versions.
+   - **Or in Terminal:** run this once, then open the app:
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/SmartMode.app
+     ```
+4. A half-filled circle appears in the menu bar. There is no Dock icon.
+5. **Set a location.** Until you do, SmartMode does nothing: the menu-bar icon shows a warning triangle and the top of the menu says so. Choose **Set location…**, search for your city (English), or type coordinates such as `35.69, 139.69`.
+6. The first time it switches, macOS asks whether SmartMode may control System Events. Click **Allow**; without that it can't change the appearance.
 
-## Build and run
-
-```bash
-./scripts/build-app.sh   # builds SmartMode.app
-open SmartMode.app
-```
-
-The first switch asks for permission to control System Events. Move `SmartMode.app` to `/Applications`: the first time it runs from there, SmartMode adds itself to your login items so it starts automatically (macOS shows a notification when that happens). Turn that off any time with the menu's **Launch at login** toggle, and it stays off. macOS ties a login item to the app's location, which is why it only does this for a copy in `/Applications`.
+The first time it runs from `/Applications`, SmartMode adds itself to your login items so it starts automatically, and macOS shows a notification when that happens. Turn it off any time with the **Launch at login** toggle in the menu, and it stays off. macOS ties a login item to the app's location, which is why it only does this for a copy in `/Applications`.
 
 ## Location
 
-The sun's position needs to know roughly where you are. Pick your place from the menu with **Set location…**: search for a city by name (English, via Open-Meteo) or type coordinates such as `35.69, 139.69`. SmartMode writes the result into the `location:` section of `~/.config/smart-mode/config.yaml`, so that file is the one place your location lives. You can also edit `latitude` and `longitude` there by hand. `locationName` is only shown in the menu; without it the menu shows the coordinates.
-
-Until a location is set the app does nothing: the menu-bar icon turns into a warning triangle and the top of the menu asks you to set one.
+Pick your place from the menu with **Set location…**: search for a city by name (English, via Open-Meteo) or type coordinates such as `35.69, 139.69`. SmartMode writes the result into the `location:` section of `~/.config/smart-mode/config.yaml`, so that file is the one place your location lives. You can also edit `latitude` and `longitude` there by hand. `locationName` is only shown in the menu; without it the menu shows the coordinates.
 
 ## Config
 
@@ -45,13 +46,24 @@ Until a location is set the app does nothing: the menu-bar icon turns into a war
 ## Updates and feedback
 
 - **New versions:** once a day SmartMode asks GitHub for the latest release (one request to `api.github.com`, nothing sent but the request itself) and shows **New version available** in the menu when it's newer than yours. Turn this off with `checkForUpdates: false` in the config. Updating is manual: download the new zip from the releases page.
-- **Problems:** **Report an issue…** in the menu opens a bug report form on GitHub with your SmartMode and macOS versions filled in. Your location and settings are not put in the link; the form asks you to paste them only if you want to share them.
+- **Problems and feedback:** **Report an issue…** in the menu opens a bug report form on GitHub with your SmartMode and macOS versions filled in. Your location and settings are not put in the link; the form asks you to paste them only if you want to share them.
 
-## Tests
+## Building from source
+
+```bash
+./scripts/build-app.sh   # builds SmartMode.app
+open SmartMode.app
+```
+
+Every CI run also attaches a `SmartMode-<commit>` artifact (a zip of `SmartMode.app`) to the run on the repo's Actions tab, kept for 30 days. Open it the same way as a release download.
+
+Run the tests with:
 
 ```bash
 swift test         # with full Xcode
 ./scripts/test.sh  # with only the Command Line Tools
 ```
 
-The light-sensor path uses undocumented private APIs and may break with a macOS update.
+## License
+
+SmartMode is licensed under the [Apache License 2.0](LICENSE).
