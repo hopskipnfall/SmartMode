@@ -61,13 +61,13 @@ final class Tray {
         guard let menu = CreatePopupMenu() else { return }
         defer { DestroyMenu(menu) }
 
-        func item(_ text: String, id: UInt = 0, flags: Int32 = MF_STRING) {
+        func item(_ text: String, id: UInt64 = 0, flags: Int32 = MF_STRING) {
             withWide(text) { _ = AppendMenuW(menu, UINT(flags), id, $0) }
         }
         func text(_ label: String) { item(label, flags: MF_STRING | MF_GRAYED) }
         func separator() { AppendMenuW(menu, UINT(MF_SEPARATOR), 0, nil) }
         func button(_ label: String, _ command: Command, checked: Bool = false) {
-            item(label, id: UInt(command.rawValue), flags: MF_STRING | (checked ? MF_CHECKED : MF_UNCHECKED))
+            item(label, id: UInt64(command.rawValue), flags: MF_STRING | (checked ? MF_CHECKED : MF_UNCHECKED))
         }
 
         if model.needsLocation {
@@ -111,6 +111,6 @@ final class Tray {
     /// Whether `window` is the location window, so Enter and Tab work inside it.
     func isLocationDialogMessage(_ message: inout MSG) -> Bool {
         guard let window = locationWindow.window else { return false }
-        return IsDialogMessageW(window, &message).boolValue
+        return IsDialogMessageW(window, &message)
     }
 }

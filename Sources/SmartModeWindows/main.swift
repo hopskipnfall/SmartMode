@@ -45,7 +45,7 @@ model.start()
 SetTimer(mainWindow, tickTimer, 10_000, nil)
 
 var message = MSG()
-while GetMessageW(&message, nil, 0, 0).boolValue {
+while GetMessageW(&message, nil, 0, 0) {
     if let tray, tray.isLocationDialogMessage(&message) { continue }
     TranslateMessage(&message)
     DispatchMessageW(&message)
