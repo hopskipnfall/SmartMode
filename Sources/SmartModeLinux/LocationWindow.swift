@@ -97,7 +97,7 @@ final class LocationWindow {
         let id = searchID
         setMessage("Searching…")
         clearResults()
-        Network.searchPlaces(text) { [self] places, failed in
+        model.search(text) { [self] places, failed in
             guard id == searchID else { return }   // a newer search superseded this one
             setMessage(failed ? "Couldn't search. Check your internet connection, or type coordinates like 35.69, 139.69."
                        : places.isEmpty ? "No places found. Try a nearby city, or type coordinates like 35.69, 139.69." : nil)

@@ -35,6 +35,15 @@ struct ApplyError: LocalizedError {
     var errorDescription: String? { message }
 }
 
+struct LinuxServices: PlatformServices {
+    private let sensor = SensorProvider()
+
+    func currentAppearance() -> Appearance { Applier.current() }
+    func apply(_ appearance: Appearance) throws { try Applier.set(appearance) }
+    func readLux(now: Date) -> Double? { sensor.read(now: now) }
+    func fetch(_ url: URL, _ completion: @escaping (Data?) -> Void) { SmartModeLinux.fetch(url, completion) }
+}
+
 enum Applier {
     static let desktop = LinuxDesktop.detect(currentDesktop: ProcessInfo.processInfo.environment["XDG_CURRENT_DESKTOP"])
 
