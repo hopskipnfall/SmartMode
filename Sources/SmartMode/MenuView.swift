@@ -4,6 +4,15 @@ struct MenuView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
+        if model.needsLocation {
+            Button {
+                model.openLocationWindow()
+            } label: {
+                Label("Set a location to get started…", systemImage: "exclamationmark.triangle.fill")
+            }
+            Text("SmartMode does nothing until it knows where you are.")
+            Divider()
+        }
         ForEach(Array(model.lines.enumerated()), id: \.offset) { _, line in
             Text(line)
         }

@@ -31,6 +31,8 @@ The first switch asks for permission to control System Events. Use the menu's **
 
 The sun's position needs to know roughly where you are. Pick your place from the menu with **Set location…**: search for a city by name (English, via Open-Meteo) or type coordinates such as `35.69, 139.69`. The choice is remembered in the app's preferences.
 
+Until a location is set the app does nothing: the menu-bar icon turns into a warning triangle and the top of the menu asks you to set one.
+
 To pin exact coordinates instead, put `latitude` and `longitude` in the config file. They override the menu's choice.
 
 ## Config

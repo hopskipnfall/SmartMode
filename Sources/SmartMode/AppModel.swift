@@ -10,6 +10,9 @@ final class AppModel: ObservableObject {
     @Published var loginItemError: String?
     @Published var locationLabel: String?
     @Published var locationSetInConfig = false
+
+    /// Without a location the app can't place the sun, so it does nothing at all.
+    var needsLocation: Bool { locationLabel == nil }
     @Published var paused = false {
         didSet { controller.paused = paused }
     }
@@ -119,8 +122,6 @@ final class AppModel: ObservableObject {
         var out: [String] = []
         if let location {
             out.append("Location: \(location.label)" + (location.setInConfig ? " (set in config.yaml)" : ""))
-        } else {
-            out.append("Location not set. Choose \"Set location…\" below.")
         }
         out.append("Now: \(system.rawValue) · \(actionLine)")
         if let decision {
