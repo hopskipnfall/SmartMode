@@ -32,10 +32,23 @@ final class AppModel: ObservableObject {
 
     init() {
         writeExampleConfigIfMissing()
+        enableLaunchAtLoginByDefaultOnce()
         tick()
         timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
+    }
+
+    /// Launch at login starts on by default. It is applied a single time (and only for a copy
+    /// installed in an Applications folder), so turning it off from the menu afterwards sticks.
+    private func enableLaunchAtLoginByDefaultOnce() {
+        let key = "loginItem.defaultApplied"
+        let defaults = UserDefaults.standard
+        guard shouldEnableLoginItemByDefault(alreadyApplied: defaults.bool(forKey: key),
+                                             bundlePath: Bundle.main.bundlePath,
+                                             homeDirectory: NSHomeDirectory()) else { return }
+        defaults.set(true, forKey: key)
+        setLaunchAtLogin(true)
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {

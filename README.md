@@ -25,7 +25,7 @@ xattr -dr com.apple.quarantine SmartMode.app
 open SmartMode.app
 ```
 
-The first switch asks for permission to control System Events. Use the menu's **Launch at login** toggle to start it automatically. macOS ties that to the app's location, so move `SmartMode.app` to `/Applications` first.
+The first switch asks for permission to control System Events. Move `SmartMode.app` to `/Applications`: the first time it runs from there, SmartMode adds itself to your login items so it starts automatically (macOS shows a notification when that happens). Turn that off any time with the menu's **Launch at login** toggle, and it stays off. macOS ties a login item to the app's location, which is why it only does this for a copy in `/Applications`.
 
 ## Location
 
