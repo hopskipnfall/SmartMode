@@ -41,15 +41,18 @@ The Linux build is a tray icon (StatusNotifier / AppIndicator) with the same men
 
 ### Install
 
-1. Open the latest run on the repo's Actions tab and download the `SmartMode-linux-<commit>` artifact (there is no Linux release download yet). It is a `.tar.gz` of one x86_64 binary built on Ubuntu 24.04, which matches Mint 22.
-2. Unpack it somewhere stable, such as `~/.local/bin`, and run it:
-   ```bash
-   tar xzf SmartMode-linux-X64.tar.gz -C ~/.local/bin
-   ~/.local/bin/SmartModeLinux
-   ```
-3. Set a location from the tray menu, as on macOS.
+On Debian, Ubuntu and Linux Mint (x86_64, built on Ubuntu 24.04 so Mint 22 and Ubuntu 24.04 or later), install the `.deb`:
 
-It needs `libgtk-3-0`, `libayatana-appindicator3-1`, libcurl and libxml2, which Mint already has. GNOME also needs the AppIndicator extension to show tray icons.
+1. Download `smart-mode_<version>_amd64.deb` from the [latest release](https://github.com/hopskipnfall/SmartMode/releases/latest), or from the `SmartMode-linux-<commit>` artifact on a run in the repo's Actions tab (a zip containing the `.deb`).
+2. Install it, which also pulls in the libraries it needs:
+   ```bash
+   sudo apt install ./smart-mode_<version>_amd64.deb
+   ```
+3. Start **SmartMode** from your applications menu (or run `smart-mode`) and set a location from the tray menu, as on macOS.
+
+Remove it with `sudo apt remove smart-mode`. That doesn't touch `~/.config/smart-mode/config.yaml` or the autostart entry in `~/.config/autostart`; turn **Launch at login** off first if you want that gone too.
+
+GNOME needs the AppIndicator extension to show tray icons.
 
 ### How it differs from macOS
 
@@ -65,6 +68,7 @@ Needs the Swift toolchain, `libgtk-3-dev` and `libayatana-appindicator3-dev`:
 ```bash
 swift build -c release --product SmartModeLinux
 .build/release/SmartModeLinux
+./scripts/build-deb.sh   # or build the .deb
 ```
 
 ## Location

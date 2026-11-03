@@ -1,0 +1,2 @@
+# The YAML parser (Yams, which wraps libyaml) is linked into the binary together with the Swift runtime.
+smart-mode: embedded-library libyaml [usr/bin/smart-mode]

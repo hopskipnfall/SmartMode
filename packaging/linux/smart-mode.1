@@ -1,0 +1,24 @@
+.TH SMART-MODE 1 "2026" "SmartMode" "User Commands"
+.SH NAME
+smart-mode \- switch light and dark mode from the sun and room brightness
+.SH SYNOPSIS
+.B smart-mode
+.SH DESCRIPTION
+.B smart-mode
+puts an icon in the system tray and switches the desktop between light and dark mode.
+It uses the sun's position at a configured location, cloud cover from Open-Meteo,
+and the ambient light sensor when the machine has one.
+On Cinnamon it switches the Mint-Y themes; elsewhere it sets the GNOME color scheme with
+.BR gsettings (1).
+.PP
+Set a location from the tray menu. Settings live in
+.IR ~/.config/smart-mode/config.yaml .
+.SH FILES
+.TP
+.I ~/.config/smart-mode/config.yaml
+Settings, reloaded when saved.
+.TP
+.I ~/.config/autostart/smart-mode.desktop
+Created by the "Launch at login" menu toggle.
+.SH SEE ALSO
+https://github.com/hopskipnfall/SmartMode

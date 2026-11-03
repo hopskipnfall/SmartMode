@@ -1,0 +1,32 @@
+name: Release assets
+
+# Publish a release on GitHub (tag v<VERSION>) and the Linux package is built and attached to it.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  linux-deb:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Check the tag matches VERSION
+        run: |
+          [ "v$(tr -d '[:space:]' < VERSION)" = "${{ github.event.release.tag_name }}" ] \
+            || { echo "tag ${{ github.event.release.tag_name }} does not match VERSION"; exit 1; }
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.1"
+      - name: Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libcurl4-openssl-dev libxml2-dev
+      - name: Build Debian package
+        run: ./scripts/build-deb.sh --static-swift-stdlib
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" smart-mode_*.deb --clobber
