@@ -16,6 +16,15 @@ let platformTargets: [Target] = [
     .systemLibrary(name: "CGtk", pkgConfig: "gtk+-3.0 ayatana-appindicator3-0.1"),
     .executableTarget(name: "SmartModeLinux", dependencies: ["SmartModeCore", "CGtk"]),
 ]
+#elseif os(Windows)
+let platformTargets: [Target] = [
+    .executableTarget(
+        name: "SmartModeWindows",
+        dependencies: ["SmartModeCore"],
+        // A tray app: no console window.
+        linkerSettings: [.unsafeFlags(["-Xlinker", "/SUBSYSTEM:WINDOWS", "-Xlinker", "/ENTRY:mainCRTStartup"])]
+    ),
+]
 #else
 let platformTargets: [Target] = []
 #endif

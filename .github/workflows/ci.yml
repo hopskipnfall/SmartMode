@@ -37,6 +37,45 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  build-and-test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: compnerd/gha-setup-swift@main
+        with:
+          branch: swift-6.1-release
+          tag: 6.1-RELEASE
+      - name: Unit tests
+        run: swift test
+      - name: Build
+        run: swift build -c release --product SmartModeWindows
+      - name: Bundle the Swift runtime
+        # A normal PC has no Swift runtime, and static linking isn't reliable on Windows, so the
+        # exe ships with the DLLs it imports (the Swift runtime, Foundation, and what they load).
+        shell: pwsh
+        run: |
+          $bin = (swift build -c release --product SmartModeWindows --show-bin-path).Trim()
+          $runtime = Split-Path (Get-Command swiftCore.dll).Source
+          Write-Host "Swift runtime: $runtime"
+          New-Item -ItemType Directory -Path SmartMode | Out-Null
+          Copy-Item "$bin\SmartModeWindows.exe" SmartMode\
+          Get-ChildItem $runtime -Filter *.dll | ForEach-Object {
+            if ($_.Name -match '^(swift|Foundation|_Foundation|BlocksRuntime|dispatch|lib|zlib)') { Copy-Item $_.FullName SmartMode\ }
+          }
+          # The Visual C++ runtime the Swift DLLs load; a PC without the redistributable lacks it.
+          foreach ($name in 'vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll') {
+            $path = "$env:SystemRoot\System32\$name"
+            if (Test-Path $path) { Copy-Item $path SmartMode\ }
+          }
+          Get-ChildItem SmartMode | Format-Table Name, Length
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartMode-windows-${{ github.sha }}
+          path: SmartMode
+          if-no-files-found: error
+          retention-days: 30
+
   build-and-test:
     runs-on: macos-latest
     steps:

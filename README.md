@@ -1,6 +1,6 @@
 # SmartMode
 
-SmartMode switches macOS and Linux between light and dark mode from the sun and your room's brightness instead of a schedule. It lives in the menu bar (macOS) or the system tray (Linux).
+SmartMode switches macOS, Linux and Windows between light and dark mode from the sun and your room's brightness instead of a schedule. It lives in the menu bar (macOS) or the notification area / system tray (Windows and Linux).
 
 <img width="373" height="351" alt="The SmartMode menu showing the current decision, the sun and the room reading" src="https://github.com/user-attachments/assets/0d432fcf-673d-4a06-a1b1-1c6664a1ca04" />
 
@@ -69,6 +69,22 @@ Needs the Swift toolchain, `libgtk-3-dev` and `libayatana-appindicator3-dev`:
 swift build -c release --product SmartModeLinux
 .build/release/SmartModeLinux
 ./scripts/build-deb.sh   # or build the .deb
+```
+
+## Windows
+
+The Windows build is a notification-area icon with the same menu. Right-click it (or click it) to open the menu. It needs Windows 10 or 11 on x64 and is new, so expect rough edges.
+
+- **Install:** download the `SmartMode-windows-<commit>` artifact from the latest run on the repo's Actions tab (there is no Windows release download yet), unzip it and run `SmartModeWindows.exe`. Keep the whole folder together: the `.dll` files next to the exe are the Swift runtime it needs. The app isn't signed, so SmartScreen warns the first time: choose **More info** > **Run anyway**. Keep the `.exe` somewhere stable such as `%LOCALAPPDATA%\SmartMode`.
+- **Switching:** sets `AppsUseLightTheme` and `SystemUsesLightTheme` under `HKEY_CURRENT_USER`, so apps, the taskbar and the Start menu all change, then tells running programs about it.
+- **Ambient light sensor:** not supported yet; the sun and clouds decide on their own.
+- **Launch at login** adds `SmartMode` to `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`, on by default the first time the app runs.
+- The config is `%USERPROFILE%\.config\smart-mode\config.yaml`, and there is no update check yet.
+
+Build it from source with the Swift toolchain for Windows and Visual Studio's build tools:
+
+```bash
+swift build -c release --product SmartModeWindows
 ```
 
 ## Location
