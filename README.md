@@ -12,11 +12,16 @@ Changing the appearance by hand pauses auto-switching until the automatic decisi
 
 ## Download a build
 
-Every CI run attaches a `SmartMode-<commit>` artifact (a zip of `SmartMode.app`) to the run on the repo's Actions tab, kept for 30 days. The app is only ad-hoc signed, so macOS quarantines a downloaded copy. After unzipping, clear that once:
+Every CI run attaches a `SmartMode-<commit>` artifact (a zip of `SmartMode.app`) to the run on the repo's Actions tab, kept for 30 days. Releases carry the same zip.
 
-```bash
-xattr -dr com.apple.quarantine SmartMode.app
-```
+The app is only ad-hoc signed and not notarized, so macOS blocks a downloaded copy the first time you open it. Allow it either way:
+
+- **In System Settings (easiest):** open **Privacy & Security**, scroll down to the Security section, find the message saying SmartMode was blocked, click **Open Anyway** and confirm. Then open the app again. The exact wording differs a little between macOS versions.
+- **Or in Terminal:** after unzipping, clear the quarantine flag once:
+
+  ```bash
+  xattr -dr com.apple.quarantine SmartMode.app
+  ```
 
 ## Build and run
 
