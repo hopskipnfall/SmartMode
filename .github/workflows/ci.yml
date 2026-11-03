@@ -17,17 +17,23 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libcurl4-openssl-dev libxml2-dev
       - name: Unit tests
         run: swift test
-      - name: Build
-        # The Swift runtime is linked in, so the binary only needs GTK, AppIndicator, curl and libxml2 installed.
-        run: swift build -c release --product SmartModeLinux --static-swift-stdlib
-      - name: Package binary
-        # tar keeps the executable bit, which an artifact zip would drop.
-        run: tar -czf SmartMode-linux-${{ runner.arch }}.tar.gz -C .build/release SmartModeLinux
-      - name: Upload binary
+      - name: Build Debian package
+        # The Swift runtime is linked in, so the package only needs GTK, AppIndicator, curl and libxml2.
+        run: ./scripts/build-deb.sh --static-swift-stdlib
+      - name: Lint package
+        run: |
+          sudo apt-get install -y lintian desktop-file-utils
+          lintian --fail-on error --tag-display-limit 0 smart-mode_*.deb
+      - name: Install package
+        run: |
+          sudo apt-get install -y ./smart-mode_*.deb
+          test -x /usr/bin/smart-mode
+          desktop-file-validate /usr/share/applications/smart-mode.desktop
+      - name: Upload package
         uses: actions/upload-artifact@v4
         with:
           name: SmartMode-linux-${{ github.sha }}
-          path: SmartMode-linux-${{ runner.arch }}.tar.gz
+          path: smart-mode_*.deb
           if-no-files-found: error
           retention-days: 30
 

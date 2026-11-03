@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=SmartMode
+Comment=Switch between light and dark mode from the sun and room brightness
+Exec=smart-mode
+Icon=weather-clear-night
+Terminal=false
+Categories=Utility;
+Keywords=dark mode;light mode;theme;sun;
