@@ -35,6 +35,22 @@ Because the sensor API is undocumented, a macOS update could break sensor readin
 
 The first time it runs from `/Applications`, SmartMode adds itself to your login items so it starts automatically, and macOS shows a notification when that happens. Turn it off any time with the **Launch at login** toggle in the menu, and it stays off. macOS ties a login item to the app's location, which is why it only does this for a copy in `/Applications`.
 
+## Linux
+
+The Linux build is a tray icon (StatusNotifier / AppIndicator) with the same menu, and works the same way as on macOS, with these differences:
+
+- **Desktops:** Linux Mint **Cinnamon** switches the Mint-Y GTK and Cinnamon themes (`Mint-Y` ↔ `Mint-Y-Dark`, keeping your accent) plus the system color scheme. Other desktops (GNOME and friends) switch `org.gnome.desktop.interface color-scheme`. It uses `gsettings`.
+- **Ambient light sensor:** read from the kernel's IIO interface (`/sys/bus/iio/devices/*/in_illuminance_*`). Many machines have none; then the sun and clouds decide on their own. A closed lid (`/proc/acpi/button/lid`) counts as no reading.
+- **Launch at login** writes `~/.config/autostart/smart-mode.desktop`.
+- No update check yet.
+
+Build and run it (needs the Swift toolchain, `libgtk-3-dev` and `libayatana-appindicator3-dev`; GNOME also needs the AppIndicator extension to show tray icons):
+
+```bash
+swift build -c release --product SmartModeLinux
+.build/release/SmartModeLinux
+```
+
 ## Location
 
 Pick your place from the menu with **Set location…**: search for a city by name (English, via Open-Meteo) or type coordinates such as `35.69, 139.69`. SmartMode writes the result into the `location:` section of `~/.config/smart-mode/config.yaml`, so that file is the one place your location lives. You can also edit `latitude` and `longitude` there by hand. `locationName` is only shown in the menu; without it the menu shows the coordinates.
