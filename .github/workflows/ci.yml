@@ -42,13 +42,27 @@ jobs:
       - name: Unit tests
         run: swift test
       - name: Build
-        # Static runtime: a normal PC has no swiftCore.dll or Foundation DLLs next to the exe.
-        run: swift build -c release --product SmartModeWindows --static-swift-stdlib
-      - name: Upload binary
+        run: swift build -c release --product SmartModeWindows
+      - name: Bundle the Swift runtime
+        # A normal PC has no Swift runtime, and static linking isn't reliable on Windows, so the
+        # exe ships with the DLLs it imports (the Swift runtime, Foundation, and what they load).
+        shell: pwsh
+        run: |
+          $bin = (swift build -c release --product SmartModeWindows --show-bin-path).Trim()
+          $runtime = Split-Path (Get-Command swiftCore.dll).Source
+          Write-Host "Swift runtime: $runtime"
+          New-Item -ItemType Directory -Path SmartMode | Out-Null
+          Copy-Item "$bin\SmartModeWindows.exe" SmartMode\
+          Get-ChildItem $runtime -Filter *.dll | ForEach-Object {
+            if ($_.Name -match '^(swift|Foundation|_Foundation|BlocksRuntime|dispatch|lib|zlib)') { Copy-Item $_.FullName SmartMode\ }
+          }
+          Copy-Item "$env:SystemRoot\System32\vcruntime140.dll" SmartMode\
+          Get-ChildItem SmartMode | Format-Table Name, Length
+      - name: Upload app
         uses: actions/upload-artifact@v4
         with:
           name: SmartMode-windows-${{ github.sha }}
-          path: .build/release/SmartModeWindows.exe
+          path: SmartMode
           if-no-files-found: error
           retention-days: 30
 

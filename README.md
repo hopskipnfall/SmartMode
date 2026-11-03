@@ -71,7 +71,7 @@ swift build -c release --product SmartModeLinux
 
 The Windows build is a notification-area icon with the same menu. Right-click it (or click it) to open the menu. It needs Windows 10 or 11 on x64 and is new, so expect rough edges.
 
-- **Install:** download the `SmartMode-windows-<commit>` artifact from the latest run on the repo's Actions tab (there is no Windows release download yet), unzip it and run `SmartModeWindows.exe`. The app isn't signed, so SmartScreen warns the first time: choose **More info** > **Run anyway**. Keep the `.exe` somewhere stable such as `%LOCALAPPDATA%\SmartMode`.
+- **Install:** download the `SmartMode-windows-<commit>` artifact from the latest run on the repo's Actions tab (there is no Windows release download yet), unzip it and run `SmartModeWindows.exe`. Keep the whole folder together: the `.dll` files next to the exe are the Swift runtime it needs. The app isn't signed, so SmartScreen warns the first time: choose **More info** > **Run anyway**. Keep the `.exe` somewhere stable such as `%LOCALAPPDATA%\SmartMode`.
 - **Switching:** sets `AppsUseLightTheme` and `SystemUsesLightTheme` under `HKEY_CURRENT_USER`, so apps, the taskbar and the Start menu all change, then tells running programs about it.
 - **Ambient light sensor:** not supported yet; the sun and clouds decide on their own.
 - **Launch at login** adds `SmartMode` to `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`, on by default the first time the app runs.
