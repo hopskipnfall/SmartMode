@@ -25,7 +25,7 @@ xattr -dr com.apple.quarantine SmartMode.app
 open SmartMode.app
 ```
 
-The first switch asks for permission to control System Events. Use the menu's **Launch at login** toggle to start it automatically. macOS ties that to the app's location, so move `SmartMode.app` to `/Applications` first.
+The first switch asks for permission to control System Events. Move `SmartMode.app` to `/Applications`: the first time it runs from there, SmartMode adds itself to your login items so it starts automatically (macOS shows a notification when that happens). Turn that off any time with the menu's **Launch at login** toggle, and it stays off. macOS ties a login item to the app's location, which is why it only does this for a copy in `/Applications`.
 
 ## Location
 
@@ -36,6 +36,11 @@ Until a location is set the app does nothing: the menu-bar icon turns into a war
 ## Config
 
 `~/.config/smart-mode/config.yaml` is created on first launch with every setting at its default and a comment where the name isn't enough, and it reloads when you save. If the file has an error, the menu says so and the app keeps using the last good settings.
+
+## Updates and feedback
+
+- **New versions:** once a day SmartMode asks GitHub for the latest release (one request to `api.github.com`, nothing sent but the request itself) and shows **New version available** in the menu when it's newer than yours. Turn this off with `checkForUpdates: false` in the config. Updating is manual: download the new zip from the releases page.
+- **Problems:** **Report an issue…** in the menu opens a bug report form on GitHub with your SmartMode and macOS versions filled in. Your location and settings are not put in the link; the form asks you to paste them only if you want to share them.
 
 ## Tests
 

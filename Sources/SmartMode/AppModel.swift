@@ -10,6 +10,7 @@ final class AppModel: ObservableObject {
     @Published var loginItemError: String?
     @Published var locationLabel: String?
     @Published var locationSaveError: String?
+    @Published var availableUpdate: AvailableUpdate?
 
     /// Without a location the app can't place the sun, so it does nothing at all.
     var needsLocation: Bool { locationLabel == nil }
@@ -25,15 +26,29 @@ final class AppModel: ObservableObject {
     private var configModified: Date?
     private let sensor = SensorProvider()
     private let weather = WeatherProvider()
+    private let updates = UpdateChecker()
     private var timer: Timer?
     private var lastApplyError: String?
 
     init() {
         writeExampleConfigIfMissing()
+        enableLaunchAtLoginByDefaultOnce()
         tick()
         timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
+    }
+
+    /// Launch at login starts on by default. It is applied a single time (and only for a copy
+    /// installed in an Applications folder), so turning it off from the menu afterwards sticks.
+    private func enableLaunchAtLoginByDefaultOnce() {
+        let key = "loginItem.defaultApplied"
+        let defaults = UserDefaults.standard
+        guard shouldEnableLoginItemByDefault(alreadyApplied: defaults.bool(forKey: key),
+                                             bundlePath: Bundle.main.bundlePath,
+                                             homeDirectory: NSHomeDirectory()) else { return }
+        defaults.set(true, forKey: key)
+        setLaunchAtLogin(true)
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -63,6 +78,21 @@ final class AppModel: ObservableObject {
             locationSaveError = "Couldn't save the location to config.yaml: \(error.localizedDescription)"
         }
         tick()
+    }
+
+    func openUpdate(_ update: AvailableUpdate) {
+        NSWorkspace.shared.open(update.url)
+    }
+
+    /// Opens GitHub's new-bug-report form with the SmartMode and macOS versions filled in.
+    func openBugReport() {
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        let macOS = "macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"
+        NSWorkspace.shared.open(bugReportURL(version: updates.currentVersion ?? "unknown", macOS: macOS))
+    }
+
+    private func refreshAvailableUpdate() {
+        availableUpdate = controller.config.checkForUpdates ? updates.available : nil
     }
 
     func openConfig() {
@@ -95,6 +125,11 @@ final class AppModel: ObservableObject {
         let now = Date()
         reloadConfigIfChanged()
         let config = controller.config
+
+        if config.checkForUpdates {
+            updates.checkIfDue(now: now) { [weak self] in self?.refreshAvailableUpdate() }
+        }
+        refreshAvailableUpdate()
 
         let location = resolveLocation(config: config)
         locationLabel = location?.label

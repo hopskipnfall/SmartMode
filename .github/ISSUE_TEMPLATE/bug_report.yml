@@ -1,0 +1,50 @@
+name: Bug report
+description: SmartMode isn't doing what you expect
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The more of the fields below you can fill in, the easier it is to track down.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: For example, "it stayed in light mode after sunset" or "the menu says no sensor reading".
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+  - type: input
+    id: version
+    attributes:
+      label: SmartMode version
+      description: Filled in automatically when you use "Report an issue…" in the menu; otherwise see About SmartMode.
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: Filled in automatically when you use "Report an issue…" in the menu.
+  - type: input
+    id: mac
+    attributes:
+      label: Mac model
+      placeholder: MacBook Pro 14-inch, M3, 2023
+  - type: textarea
+    id: menu
+    attributes:
+      label: Text from the SmartMode menu
+      description: |
+        Click the menu-bar icon and paste the lines at the top (Location, Now, Decision, Sun, Room).
+        The Location line shows where you are, so delete it if you'd rather not share that.
+      render: text
+  - type: textarea
+    id: config
+    attributes:
+      label: Your config.yaml (optional)
+      description: Only if you've changed settings and think they matter. Remove the `location:` section first if you don't want to share it.
+      render: yaml

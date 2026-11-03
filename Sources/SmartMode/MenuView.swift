@@ -16,6 +16,14 @@ struct MenuView: View {
         ForEach(Array(model.lines.enumerated()), id: \.offset) { _, line in
             Text(line)
         }
+        if let update = model.availableUpdate {
+            Divider()
+            Button {
+                model.openUpdate(update)
+            } label: {
+                Label("New version available: \(update.version)…", systemImage: "arrow.down.circle.fill")
+            }
+        }
         if let error = model.configError {
             Divider()
             Text(error)
@@ -37,6 +45,7 @@ struct MenuView: View {
         }
         Button("Set location…") { model.openLocationWindow() }
         Button("Open config…") { model.openConfig() }
+        Button("Report an issue…") { model.openBugReport() }
         Button("About SmartMode") { AboutPanel.show() }
         Button("Quit") { NSApplication.shared.terminate(nil) }
     }
