@@ -21,8 +21,12 @@ strip --strip-unneeded "$ROOT/usr/bin/smart-mode"
 install -D -m 0644 packaging/linux/smart-mode.desktop "$ROOT/usr/share/applications/smart-mode.desktop"
 install -D -m 0644 packaging/linux/copyright "$ROOT/usr/share/doc/$PKG/copyright"
 install -D -m 0644 README.md "$ROOT/usr/share/doc/$PKG/README.md"
+install -D -m 0644 packaging/linux/lintian-overrides "$ROOT/usr/share/lintian/overrides/$PKG"
+install -d "$ROOT/usr/share/man/man1"
+gzip -9n -c packaging/linux/smart-mode.1 > "$ROOT/usr/share/man/man1/smart-mode.1.gz"
+chmod 0644 "$ROOT/usr/share/man/man1/smart-mode.1.gz"
 
-# Debian policy wants a changelog; this one is generated from the version and points at the real notes.
+# Debian policy wants a changelog (changelog.gz, as this is a native package); this one is generated from the version and points at the real notes.
 MAINTAINER="SmartMode contributors <hopskipnfall@users.noreply.github.com>"
 {
   echo "$PKG ($VERSION) unstable; urgency=medium"
@@ -30,8 +34,8 @@ MAINTAINER="SmartMode contributors <hopskipnfall@users.noreply.github.com>"
   echo "  * Release $VERSION. See https://github.com/hopskipnfall/SmartMode/releases"
   echo
   echo " -- $MAINTAINER  $(date -R -u -d "@${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct 2>/dev/null || date +%s)}")"
-} | gzip -9n > "$ROOT/usr/share/doc/$PKG/changelog.Debian.gz"
-chmod 0644 "$ROOT/usr/share/doc/$PKG/changelog.Debian.gz"
+} | gzip -9n > "$ROOT/usr/share/doc/$PKG/changelog.gz"
+chmod 0644 "$ROOT/usr/share/doc/$PKG/changelog.gz"
 
 INSTALLED_SIZE="$(du -sk "$ROOT/usr" | cut -f1)"
 mkdir -p "$ROOT/DEBIAN"
