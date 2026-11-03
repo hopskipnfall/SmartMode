@@ -3,7 +3,7 @@ import Testing
 
 struct AutoDeciderTests {
     private func decider() -> AutoDecider {
-        AutoDecider(config: Config(latitude: 0, longitude: 0)) // night < -4°, dark <= 72 lux, light >= 92 lux
+        AutoDecider(config: Config(latitude: 0, longitude: 0)) // night < 5°, cloud darkens by 13°, dark <= 72 lux, light >= 92 lux
     }
 
     @Test func nightIsDarkEvenInABrightRoom() {
@@ -47,23 +47,23 @@ struct AutoDeciderTests {
 
     @Test func cloudCoverBringsNightEarlier() {
         var clear = decider()
-        #expect(clear.decide(Readings(lux: 300, sunElevation: -2))?.mode == .light)
+        #expect(clear.decide(Readings(lux: 300, sunElevation: 6))?.mode == .light)
         var cloudy = decider()
-        // 100% cloud darkens by 8°: -2° -> -10° effective, which is night.
-        #expect(cloudy.decide(Readings(lux: 300, sunElevation: -2, cloudCoverPercent: 100))?.mode == .dark)
+        // 100% cloud darkens by 13°: 6° -> -7° effective, which is night.
+        #expect(cloudy.decide(Readings(lux: 300, sunElevation: 6, cloudCoverPercent: 100))?.mode == .dark)
     }
 
     @Test func nightBoundaryHasHysteresis() {
         var d = decider()
-        #expect(d.decide(Readings(lux: 300, sunElevation: -4.5))?.mode == .dark)   // night begins
-        #expect(d.decide(Readings(lux: 300, sunElevation: -3.5))?.mode == .dark)   // still night (within 1°)
-        #expect(d.decide(Readings(lux: 300, sunElevation: -2.9))?.mode == .light)  // day again
+        #expect(d.decide(Readings(lux: 300, sunElevation: 4.5))?.mode == .dark)    // night begins (< 5°)
+        #expect(d.decide(Readings(lux: 300, sunElevation: 5.5))?.mode == .dark)    // still night (within 1°)
+        #expect(d.decide(Readings(lux: 300, sunElevation: 6.1))?.mode == .light)   // day again
     }
 
     @Test func darkRoomAtDawnStaysDark() {
         var d = decider()
         _ = d.decide(Readings(lux: 20, sunElevation: -10))
-        #expect(d.decide(Readings(lux: 20, sunElevation: 5))?.mode == .dark)
+        #expect(d.decide(Readings(lux: 20, sunElevation: 10))?.mode == .dark)
     }
 
     @Test func luxScaleMultipliesTheRawReading() {

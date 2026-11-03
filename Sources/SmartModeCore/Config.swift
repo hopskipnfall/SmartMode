@@ -7,9 +7,9 @@ public enum ConfigError: Error, Equatable {
 
 public struct NightConfig: Codable, Equatable {
     /// It's night when the cloud-adjusted sun elevation is below this many degrees.
-    public var sunBelowDegrees = -4.0
+    public var sunBelowDegrees = 5.0
     /// 100% cloud cover counts as the sun being this many degrees lower.
-    public var cloudDarkeningDegrees = 8.0
+    public var cloudDarkeningDegrees = 13.0
 
     public init() {}
     enum CodingKeys: String, CodingKey { case sunBelowDegrees, cloudDarkeningDegrees }
@@ -80,11 +80,12 @@ public struct Config: Codable, Equatable {
     # longitude: 139.6917
 
     night:
-      # It's night when the sun is lower than this many degrees below the horizon.
-      # 0 = sunset/sunrise, -6 = end of civil twilight. At night it's always dark.
-      sunBelowDegrees: -4
-      # Cloud makes it feel darker: 100% cloud counts as the sun being this many degrees lower.
-      cloudDarkeningDegrees: 8
+      # Dark mode is enabled when the sun, adjusted for cloud, is lower than this many degrees.
+      # 5 = about half an hour before sunset on a clear day, 0 = sunset/sunrise,
+      # -6 = end of civil twilight. At night it's always dark.
+      sunBelowDegrees: 5
+      # Cloud makes it darker: 100% cloud cover counts as the sun being this many degrees lower.
+      cloudDarkeningDegrees: 13
 
     room:
       # In daytime the light sensor can switch to dark when the room is dim.
