@@ -1,7 +1,7 @@
 import Foundation
 
-/// A place the user picked: a human label plus coordinates.
-public struct Place: Codable, Equatable, Identifiable {
+/// A place found by a search: a human label plus coordinates.
+public struct Place: Equatable, Identifiable {
     public let label: String
     public let latitude: Double
     public let longitude: Double
@@ -15,24 +15,16 @@ public struct Place: Codable, Equatable, Identifiable {
     public var id: String { "\(label)|\(latitude)|\(longitude)" }
 }
 
-/// The coordinates the app actually uses, and where they came from.
+/// The coordinates the app actually uses, with a label for the menu.
 public struct Location: Equatable {
     public let latitude: Double
     public let longitude: Double
     public let label: String
-    public let setInConfig: Bool
 }
 
-/// Coordinates written in the config file override a place picked from the menu;
-/// with neither, there's no location and the app can't place the sun.
-public func resolveLocation(config: Config, saved: Place?) -> Location? {
-    if let lat = config.latitude, let lon = config.longitude {
-        return Location(latitude: lat, longitude: lon,
-                        label: String(format: "%.4f, %.4f", lat, lon), setInConfig: true)
-    }
-    if let saved {
-        return Location(latitude: saved.latitude, longitude: saved.longitude,
-                        label: saved.label, setInConfig: false)
-    }
-    return nil
+/// The configured location, or nil when none is set (the app can't place the sun without one).
+public func resolveLocation(config: Config) -> Location? {
+    guard let lat = config.location.latitude, let lon = config.location.longitude else { return nil }
+    let name = config.location.name.flatMap { $0.isEmpty ? nil : $0 }
+    return Location(latitude: lat, longitude: lon, label: name ?? String(format: "%.4f, %.4f", lat, lon))
 }

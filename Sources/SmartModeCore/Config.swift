@@ -5,6 +5,32 @@ public enum ConfigError: Error, Equatable {
     case invalid(String)
 }
 
+/// Where the user is. All three values may be empty; `name` is only ever displayed.
+public struct LocationConfig: Codable, Equatable {
+    public var name: String?
+    public var latitude: Double?
+    public var longitude: Double?
+
+    public init(name: String? = nil, latitude: Double? = nil, longitude: Double? = nil) {
+        self.name = name
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name = "locationName"
+        case latitude, longitude
+    }
+
+    public init(from decoder: Decoder) throws {
+        self.init()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decodeIfPresent(String.self, forKey: .name)
+        latitude = try c.decodeIfPresent(Double.self, forKey: .latitude)
+        longitude = try c.decodeIfPresent(Double.self, forKey: .longitude)
+    }
+}
+
 public struct NightConfig: Codable, Equatable {
     /// It's night when the cloud-adjusted sun elevation is below this many degrees.
     public var sunBelowDegrees = 5.0
@@ -41,28 +67,24 @@ public struct RoomConfig: Codable, Equatable {
 }
 
 public struct Config: Codable, Equatable {
-    /// Optional exact coordinates. When set they override a place chosen from the menu.
-    public var latitude: Double?
-    public var longitude: Double?
+    public var location = LocationConfig()
     public var night = NightConfig()
     public var room = RoomConfig()
     public var minSecondsBetweenSwitches = 60.0
 
-    public init(latitude: Double? = nil, longitude: Double? = nil) {
-        self.latitude = latitude
-        self.longitude = longitude
+    /// Everything defaulted; the arguments are a convenience for building a config with a location.
+    public init(latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil) {
+        location = LocationConfig(name: locationName, latitude: latitude, longitude: longitude)
     }
 
     enum CodingKeys: String, CodingKey {
-        case latitude, longitude, night, room, minSecondsBetweenSwitches
+        case location, night, room, minSecondsBetweenSwitches
     }
 
     public init(from decoder: Decoder) throws {
+        self.init()
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            latitude: try c.decodeIfPresent(Double.self, forKey: .latitude),
-            longitude: try c.decodeIfPresent(Double.self, forKey: .longitude)
-        )
+        location = try c.decodeIfPresent(LocationConfig.self, forKey: .location) ?? location
         night = try c.decodeIfPresent(NightConfig.self, forKey: .night) ?? night
         room = try c.decodeIfPresent(RoomConfig.self, forKey: .room) ?? room
         minSecondsBetweenSwitches = try c.decodeIfPresent(Double.self, forKey: .minSecondsBetweenSwitches) ?? minSecondsBetweenSwitches
@@ -74,10 +96,12 @@ public struct Config: Codable, Equatable {
     /// The file written on first launch: every setting at its default, with a comment where
     /// the name alone doesn't explain it.
     public static let defaultFileText = """
-    # Your location is set from the menu ("Set location…"). To use exact coordinates
-    # instead, which override the menu's choice, uncomment these two lines:
-    # latitude: 35.6895
-    # longitude: 139.6917
+    # Where you are, used to work out where the sun is. Set it from the menu ("Set location…")
+    # or fill in latitude and longitude by hand. locationName is only shown in the menu.
+    location:
+      locationName:
+      latitude:
+      longitude:
 
     night:
       # Dark mode is enabled when the sun, adjusted for cloud, is lower than this many degrees.
@@ -104,11 +128,15 @@ public struct Config: Codable, Equatable {
     }
 
     func validate() throws {
-        guard (latitude == nil) == (longitude == nil) else {
-            throw ConfigError.invalid("set both latitude and longitude, or neither")
+        guard (location.latitude == nil) == (location.longitude == nil) else {
+            throw ConfigError.invalid("set both location.latitude and location.longitude, or neither")
         }
-        if let latitude, !(-90...90).contains(latitude) { throw ConfigError.invalid("latitude must be within -90...90") }
-        if let longitude, !(-180...180).contains(longitude) { throw ConfigError.invalid("longitude must be within -180...180") }
+        if let lat = location.latitude, !(-90...90).contains(lat) {
+            throw ConfigError.invalid("location.latitude must be within -90...90")
+        }
+        if let lon = location.longitude, !(-180...180).contains(lon) {
+            throw ConfigError.invalid("location.longitude must be within -180...180")
+        }
         guard room.darkBelowLux < room.lightAboveLux else {
             throw ConfigError.invalid("room.darkBelowLux must be less than room.lightAboveLux")
         }

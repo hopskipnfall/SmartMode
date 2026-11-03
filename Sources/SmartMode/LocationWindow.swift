@@ -59,11 +59,6 @@ struct LocationSearchView: View {
                     .disabled(search.isSearching)
             }
 
-            if model.locationSetInConfig {
-                Text("latitude/longitude in config.yaml currently override this. Remove those two lines to use the place you pick here.")
-                    .font(.callout).foregroundStyle(.orange)
-            }
-
             if search.isSearching {
                 ProgressView().controlSize(.small)
             } else if let message = search.message {

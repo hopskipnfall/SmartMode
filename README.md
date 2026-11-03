@@ -29,9 +29,9 @@ The first switch asks for permission to control System Events. Use the menu's **
 
 ## Location
 
-The sun's position needs to know roughly where you are. Pick your place from the menu with **Set location…**: search for a city by name (English, via Open-Meteo) or type coordinates such as `35.69, 139.69`. The choice is remembered in the app's preferences.
+The sun's position needs to know roughly where you are. Pick your place from the menu with **Set location…**: search for a city by name (English, via Open-Meteo) or type coordinates such as `35.69, 139.69`. SmartMode writes the result into the `location:` section of `~/.config/smart-mode/config.yaml`, so that file is the one place your location lives. You can also edit `latitude` and `longitude` there by hand. `locationName` is only shown in the menu; without it the menu shows the coordinates.
 
-To pin exact coordinates instead, put `latitude` and `longitude` in the config file. They override the menu's choice.
+Until a location is set the app does nothing: the menu-bar icon turns into a warning triangle and the top of the menu asks you to set one.
 
 ## Config
 
