@@ -56,7 +56,11 @@ jobs:
           Get-ChildItem $runtime -Filter *.dll | ForEach-Object {
             if ($_.Name -match '^(swift|Foundation|_Foundation|BlocksRuntime|dispatch|lib|zlib)') { Copy-Item $_.FullName SmartMode\ }
           }
-          Copy-Item "$env:SystemRoot\System32\vcruntime140.dll" SmartMode\
+          # The Visual C++ runtime the Swift DLLs load; a PC without the redistributable lacks it.
+          foreach ($name in 'vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll') {
+            $path = "$env:SystemRoot\System32\$name"
+            if (Test-Path $path) { Copy-Item $path SmartMode\ }
+          }
           Get-ChildItem SmartMode | Format-Table Name, Length
       - name: Upload app
         uses: actions/upload-artifact@v4
