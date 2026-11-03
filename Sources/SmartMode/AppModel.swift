@@ -103,7 +103,7 @@ final class AppModel: ObservableObject {
         let actionLine: String
         switch action {
         case .hold(let why):
-            actionLine = "holding: \(why)"
+            actionLine = location == nil ? "doing nothing until a location is set" : "holding: \(why)"
         case .set(let appearance, let why):
             do {
                 try Applier.set(appearance)
