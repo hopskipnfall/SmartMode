@@ -18,7 +18,18 @@ jobs:
       - name: Unit tests
         run: swift test
       - name: Build
-        run: swift build -c release --product SmartModeLinux
+        # The Swift runtime is linked in, so the binary only needs GTK and AppIndicator installed.
+        run: swift build -c release --product SmartModeLinux --static-swift-stdlib
+      - name: Package binary
+        # tar keeps the executable bit, which an artifact zip would drop.
+        run: tar -czf SmartMode-linux-${{ runner.arch }}.tar.gz -C .build/release SmartModeLinux
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartMode-linux-${{ github.sha }}
+          path: SmartMode-linux-${{ runner.arch }}.tar.gz
+          if-no-files-found: error
+          retention-days: 30
 
   build-and-test:
     runs-on: macos-latest
